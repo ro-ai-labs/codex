@@ -1,0 +1,1325 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - heading "Codex — Module Architecture codex-rs" [level=1] [ref=e3]:
+      - text: Codex — Module Architecture
+      - generic [ref=e4]: codex-rs
+    - paragraph [ref=e5]:
+      - text: An interactive map of the Rust workspace that powers
+      - strong [ref=e6]: Codex CLI
+      - text: . Modules are grouped by role; click a card to expand, click a file to open it in your editor via
+      - code [ref=e7]: file://
+      - text: . Use the search box to highlight files whose path contains the query.
+    - generic [ref=e8]:
+      - searchbox "Filter files… (e.g. sandbox, tool_router, guardian)" [ref=e9]
+      - generic [ref=e10]:
+        - generic [ref=e11] [cursor=pointer]: All
+        - generic [ref=e12] [cursor=pointer]: Agent loop
+        - generic [ref=e13] [cursor=pointer]: Tools
+        - generic [ref=e14] [cursor=pointer]: Permissions
+        - generic [ref=e15] [cursor=pointer]: Sandbox
+        - generic [ref=e16] [cursor=pointer]: Plugins
+        - generic [ref=e17] [cursor=pointer]: Extensions
+        - generic [ref=e18] [cursor=pointer]: Surfaces / IO
+  - main [ref=e19]:
+    - generic "A single user turn flowing through Codex." [ref=e20]:
+      - generic [ref=e21]: User input
+      - generic [ref=e22]: →
+      - generic [ref=e23]: CLI / TUI surface
+      - generic [ref=e24]: →
+      - generic [ref=e25]: Session & tasks
+      - generic [ref=e26]: →
+      - generic [ref=e27]: Agent loop
+      - generic [ref=e28]: →
+      - generic [ref=e29]: Tool router
+      - generic [ref=e30]: →
+      - generic [ref=e31]: Permissions / Guardian
+      - generic [ref=e32]: →
+      - generic [ref=e33]: Sandbox exec
+      - generic [ref=e34]: →
+      - generic [ref=e35]: Events → UI / rollout
+    - generic [ref=e36]: Modules
+    - generic [ref=e37]:
+      - article [ref=e38]:
+        - generic [ref=e39] [cursor=pointer]:
+          - generic [ref=e41]: Agent loop & sessions
+          - generic [ref=e42]: core/src/session, core/src/tasks
+          - generic [ref=e43]: ▾
+        - generic [ref=e44]:
+          - generic [ref=e45]: "Drives one conversation turn: builds the prompt, calls the model, streams responses, and dispatches the tools the model requests. The session owns the rollout, turn context, and input queue."
+          - generic [ref=e46]:
+            - generic [ref=e47]:
+              - link "core/src/session/mod.rs" [ref=e48] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/session/mod.rs
+              - generic [ref=e49]: — session module root
+            - generic [ref=e50]:
+              - link "core/src/session/session.rs" [ref=e51] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/session/session.rs
+              - generic [ref=e52]: — Session state
+            - generic [ref=e53]:
+              - link "core/src/session/turn.rs" [ref=e54] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/session/turn.rs
+              - generic [ref=e55]: — single-turn driver
+            - generic [ref=e56]:
+              - link "core/src/session/turn_context.rs" [ref=e57] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/session/turn_context.rs
+              - generic [ref=e58]: — per-turn context
+            - generic [ref=e59]:
+              - link "core/src/session/handlers.rs" [ref=e60] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/session/handlers.rs
+              - generic [ref=e61]: — event handlers
+            - generic [ref=e62]:
+              - link "core/src/tasks/mod.rs" [ref=e63] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/tasks/mod.rs
+              - generic [ref=e64]: — task kinds
+            - generic [ref=e65]:
+              - link "core/src/tasks/regular.rs" [ref=e66] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/tasks/regular.rs
+              - generic [ref=e67]: — regular agent task
+            - generic [ref=e68]:
+              - link "core/src/tasks/compact.rs" [ref=e69] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/tasks/compact.rs
+              - generic [ref=e70]: — history compaction
+            - generic [ref=e71]:
+              - link "core/src/tasks/lifecycle.rs" [ref=e72] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/tasks/lifecycle.rs
+              - generic [ref=e73]: — task lifecycle
+            - generic [ref=e74]:
+              - link "core/src/codex_thread.rs" [ref=e75] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/codex_thread.rs
+              - generic [ref=e76]: — thread orchestration
+            - generic [ref=e77]:
+              - link "core/src/thread_manager.rs" [ref=e78] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/thread_manager.rs
+              - generic [ref=e79]: — thread manager
+      - article [ref=e80]:
+        - generic [ref=e81] [cursor=pointer]:
+          - generic [ref=e83]: Model client
+          - generic [ref=e84]: core/src/client*, model-provider*
+          - generic [ref=e85]: ▾
+        - generic [ref=e86]:
+          - generic [ref=e87]: Talks to OpenAI / Anthropic / Ollama / LM Studio. Handles streaming, retries, and response shape adaptation.
+          - generic [ref=e88]:
+            - generic [ref=e89]:
+              - link "core/src/client.rs" [ref=e90] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/client.rs
+              - generic [ref=e91]: — main client
+            - generic [ref=e92]:
+              - link "core/src/client_common.rs" [ref=e93] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/client_common.rs
+              - generic [ref=e94]: — shared helpers
+            - generic [ref=e95]:
+              - link "core/src/responses_retry.rs" [ref=e96] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/responses_retry.rs
+              - generic [ref=e97]: — retry policy
+            - generic [ref=e98]:
+              - link "model-provider/src/lib.rs" [ref=e99] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/model-provider/src/lib.rs
+              - generic [ref=e100]: — provider trait
+            - generic [ref=e101]:
+              - link "model-provider-info/src/lib.rs" [ref=e102] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/model-provider-info/src/lib.rs
+              - generic [ref=e103]: — provider catalog
+            - generic [ref=e104]:
+              - link "ollama/src/lib.rs" [ref=e105] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/ollama/src/lib.rs
+              - generic [ref=e106]: — Ollama backend
+            - generic [ref=e107]:
+              - link "lmstudio/src/lib.rs" [ref=e108] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/lmstudio/src/lib.rs
+              - generic [ref=e109]: — LM Studio backend
+      - article [ref=e110]:
+        - generic [ref=e111] [cursor=pointer]:
+          - generic [ref=e113]: Agent registry & roles
+          - generic [ref=e114]: core/src/agent
+          - generic [ref=e115]: ▾
+        - generic [ref=e116]:
+          - generic [ref=e117]: "Multi-agent definitions: roles, resolver, registry. Used to switch personas mid-thread and to launch sub-agents."
+          - generic [ref=e118]:
+            - generic [ref=e119]:
+              - link "core/src/agent/mod.rs" [ref=e120] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/agent/mod.rs
+              - generic [ref=e121]: — module root
+            - generic [ref=e122]:
+              - link "core/src/agent/registry.rs" [ref=e123] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/agent/registry.rs
+              - generic [ref=e124]: — role registry
+            - generic [ref=e125]:
+              - link "core/src/agent/agent_resolver.rs" [ref=e126] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/agent/agent_resolver.rs
+              - generic [ref=e127]: — resolve a role
+            - generic [ref=e128]:
+              - link "core/src/agent/role.rs" [ref=e129] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/agent/role.rs
+              - generic [ref=e130]: — Role type
+            - generic [ref=e131]:
+              - link "core/src/agent/control.rs" [ref=e132] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/agent/control.rs
+              - generic [ref=e133]: — agent control
+            - generic [ref=e134]:
+              - link "core/src/agent/status.rs" [ref=e135] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/agent/status.rs
+              - generic [ref=e136]: — status reporting
+            - generic [ref=e137]:
+              - link "core/src/agent/builtins/explorer.toml" [ref=e138] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/agent/builtins/explorer.toml
+              - generic [ref=e139]: "— built-in: explorer"
+            - generic [ref=e140]:
+              - link "core/src/agent/builtins/awaiter.toml" [ref=e141] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/agent/builtins/awaiter.toml
+              - generic [ref=e142]: "— built-in: awaiter"
+      - article [ref=e143]:
+        - generic [ref=e144] [cursor=pointer]:
+          - generic [ref=e146]: Context manager & prompts
+          - generic [ref=e147]: core/src/context, core/src/context_manager
+          - generic [ref=e148]: ▾
+        - generic [ref=e149]:
+          - generic [ref=e150]: "Builds the prompt: user instructions, environment, available tools/plugins/skills, guardian reminders, permission-state hints. Also handles compaction summaries."
+          - generic [ref=e151]:
+            - generic [ref=e152]:
+              - link "core/src/context/mod.rs" [ref=e153] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/context/mod.rs
+              - generic [ref=e154]: — module root
+            - generic [ref=e155]:
+              - link "core/src/context/user_instructions.rs" [ref=e156] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/context/user_instructions.rs
+              - generic [ref=e157]: — AGENTS.md / CLAUDE.md style
+            - generic [ref=e158]:
+              - link "core/src/context/environment_context.rs" [ref=e159] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/context/environment_context.rs
+              - generic [ref=e160]: — OS / cwd / shell info
+            - generic [ref=e161]:
+              - link "core/src/context/permissions_instructions.rs" [ref=e162] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/context/permissions_instructions.rs
+              - generic [ref=e163]: — permission-state injection
+            - generic [ref=e164]:
+              - link "core/src/context/plugin_instructions.rs" [ref=e165] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/context/plugin_instructions.rs
+              - generic [ref=e166]: — active plugins
+            - generic [ref=e167]:
+              - link "core/src/context/available_plugins_instructions.rs" [ref=e168] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/context/available_plugins_instructions.rs
+              - generic [ref=e169]: — installable plugins
+            - generic [ref=e170]:
+              - link "core/src/context/available_skills_instructions.rs" [ref=e171] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/context/available_skills_instructions.rs
+              - generic [ref=e172]: — active skills
+            - generic [ref=e173]:
+              - link "core/src/context/goal_context.rs" [ref=e174] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/context/goal_context.rs
+              - generic [ref=e175]: — goal/steering context
+            - generic [ref=e176]:
+              - link "core/src/compact.rs" [ref=e177] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/compact.rs
+              - generic [ref=e178]: — history compaction
+            - generic [ref=e179]:
+              - link "core/src/compact_remote.rs" [ref=e180] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/compact_remote.rs
+              - generic [ref=e181]: — remote summary
+      - article [ref=e182]:
+        - generic [ref=e183] [cursor=pointer]:
+          - generic [ref=e185]: Tool specs (catalog)
+          - generic [ref=e186]: tools
+          - generic [ref=e187]: ▾
+        - generic [ref=e188]:
+          - generic [ref=e189]: "The vocabulary the model is told about: function calls, the apply-patch tool, MCP tools, the dynamic tool, image detail, JSON-schema helpers. Pure declarations — no execution here."
+          - generic [ref=e190]:
+            - generic [ref=e191]:
+              - link "tools/src/lib.rs" [ref=e192] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/tools/src/lib.rs
+              - generic [ref=e193]: — crate root
+            - generic [ref=e194]:
+              - link "tools/src/tool_spec.rs" [ref=e195] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/tools/src/tool_spec.rs
+              - generic [ref=e196]: — ToolSpec
+            - generic [ref=e197]:
+              - link "tools/src/tool_definition.rs" [ref=e198] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/tools/src/tool_definition.rs
+              - generic [ref=e199]: — tool definition
+            - generic [ref=e200]:
+              - link "tools/src/tool_config.rs" [ref=e201] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/tools/src/tool_config.rs
+              - generic [ref=e202]: — config wiring
+            - generic [ref=e203]:
+              - link "tools/src/tool_discovery.rs" [ref=e204] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/tools/src/tool_discovery.rs
+              - generic [ref=e205]: — discovery rules
+            - generic [ref=e206]:
+              - link "tools/src/tool_executor.rs" [ref=e207] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/tools/src/tool_executor.rs
+              - generic [ref=e208]: — executor trait
+            - generic [ref=e209]:
+              - link "tools/src/mcp_tool.rs" [ref=e210] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/tools/src/mcp_tool.rs
+              - generic [ref=e211]: — MCP-backed tool
+            - generic [ref=e212]:
+              - link "tools/src/dynamic_tool.rs" [ref=e213] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/tools/src/dynamic_tool.rs
+              - generic [ref=e214]: — dynamic tool (defer-load)
+            - generic [ref=e215]:
+              - link "tools/src/code_mode.rs" [ref=e216] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/tools/src/code_mode.rs
+              - generic [ref=e217]: — code-mode tool
+            - generic [ref=e218]:
+              - link "tools/src/responses_api.rs" [ref=e219] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/tools/src/responses_api.rs
+              - generic [ref=e220]: — OpenAI responses shape
+      - article [ref=e221]:
+        - generic [ref=e222] [cursor=pointer]:
+          - generic [ref=e224]: Tool router & registry
+          - generic [ref=e225]: core/src/tools
+          - generic [ref=e226]: ▾
+        - generic [ref=e227]:
+          - generic [ref=e228]: Where the agent loop calls into. Resolves the tool name from the model output, dispatches to a handler, tracks parallel calls, threads events back out.
+          - generic [ref=e229]:
+            - generic [ref=e230]:
+              - link "core/src/tools/mod.rs" [ref=e231] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/tools/mod.rs
+              - generic [ref=e232]: — module root
+            - generic [ref=e233]:
+              - link "core/src/tools/router.rs" [ref=e234] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/tools/router.rs
+              - generic [ref=e235]: — dispatch by name
+            - generic [ref=e236]:
+              - link "core/src/tools/registry.rs" [ref=e237] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/tools/registry.rs
+              - generic [ref=e238]: — registry of handlers
+            - generic [ref=e239]:
+              - link "core/src/tools/orchestrator.rs" [ref=e240] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/tools/orchestrator.rs
+              - generic [ref=e241]: — orchestration glue
+            - generic [ref=e242]:
+              - link "core/src/tools/lifecycle.rs" [ref=e243] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/tools/lifecycle.rs
+              - generic [ref=e244]: — call lifecycle
+            - generic [ref=e245]:
+              - link "core/src/tools/parallel.rs" [ref=e246] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/tools/parallel.rs
+              - generic [ref=e247]: — parallel calls
+            - generic [ref=e248]:
+              - link "core/src/tools/events.rs" [ref=e249] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/tools/events.rs
+              - generic [ref=e250]: — ToolCall events
+            - generic [ref=e251]:
+              - link "core/src/tools/context.rs" [ref=e252] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/tools/context.rs
+              - generic [ref=e253]: — per-call context
+            - generic [ref=e254]:
+              - link "core/src/tools/sandboxing.rs" [ref=e255] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/tools/sandboxing.rs
+              - generic [ref=e256]: — sandbox glue
+            - generic [ref=e257]:
+              - link "core/src/tools/spec_plan.rs" [ref=e258] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/tools/spec_plan.rs
+              - generic [ref=e259]: — specs per turn
+      - article [ref=e260]:
+        - generic [ref=e261] [cursor=pointer]:
+          - generic [ref=e263]: Tool handlers (built-in)
+          - generic [ref=e264]: core/src/tools/handlers
+          - generic [ref=e265]: ▾
+        - generic [ref=e266]:
+          - generic [ref=e267]: "Concrete handlers for each built-in tool the model can call: apply_patch, shell/unified-exec, plan, MCP resource, multi-agents, request-permissions, request-plugin-install."
+          - generic [ref=e268]:
+            - generic [ref=e269]:
+              - link "core/src/tools/handlers/mod.rs" [ref=e270] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/tools/handlers/mod.rs
+              - generic [ref=e271]: — handler routing
+            - generic [ref=e272]:
+              - link "core/src/tools/handlers/apply_patch.rs" [ref=e273] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/tools/handlers/apply_patch.rs
+              - generic [ref=e274]: — apply_patch
+            - generic [ref=e275]:
+              - link "core/src/tools/handlers/agent_jobs.rs" [ref=e276] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/tools/handlers/agent_jobs.rs
+              - generic [ref=e277]: — spawn sub-agent
+            - generic [ref=e278]:
+              - link "core/src/tools/handlers/dynamic.rs" [ref=e279] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/tools/handlers/dynamic.rs
+              - generic [ref=e280]: — dynamic tool
+            - generic [ref=e281]:
+              - link "core/src/tools/handlers/extension_tools.rs" [ref=e282] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/tools/handlers/extension_tools.rs
+              - generic [ref=e283]: — extension contributions
+            - generic [ref=e284]:
+              - link "core/src/tools/handlers/goal.rs" [ref=e285] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/tools/handlers/goal.rs
+              - generic [ref=e286]: — goal tool
+            - generic [ref=e287]:
+              - link "core/src/tools/handlers/mcp.rs" [ref=e288] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/tools/handlers/mcp.rs
+              - generic [ref=e289]: — MCP forwarding
+            - generic [ref=e290]:
+              - link "core/src/tools/handlers/mcp_resource.rs" [ref=e291] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/tools/handlers/mcp_resource.rs
+              - generic [ref=e292]: — MCP resources
+            - generic [ref=e293]:
+              - link "core/src/tools/handlers/multi_agents.rs" [ref=e294] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/tools/handlers/multi_agents.rs
+              - generic [ref=e295]: — multi-agent dispatch
+            - generic [ref=e296]:
+              - link "core/src/tools/handlers/multi_agents_v2.rs" [ref=e297] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/tools/handlers/multi_agents_v2.rs
+              - generic [ref=e298]: — multi-agent v2
+            - generic [ref=e299]:
+              - link "core/src/tools/handlers/plan.rs" [ref=e300] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/tools/handlers/plan.rs
+              - generic [ref=e301]: — plan tool
+            - generic [ref=e302]:
+              - link "core/src/tools/handlers/request_permissions.rs" [ref=e303] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/tools/handlers/request_permissions.rs
+              - generic [ref=e304]: — ask user for perms
+            - generic [ref=e305]:
+              - link "core/src/tools/handlers/request_plugin_install.rs" [ref=e306] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/tools/handlers/request_plugin_install.rs
+              - generic [ref=e307]: — ask user to install plugin
+      - article [ref=e308]:
+        - generic [ref=e309] [cursor=pointer]:
+          - generic [ref=e311]: Exec runtimes
+          - generic [ref=e312]: core/src/tools/runtimes
+          - generic [ref=e313]: ▾
+        - generic [ref=e314]:
+          - generic [ref=e315]: "How shell-style tools actually run: apply_patch directly, shell via a spawned process, or unified_exec for long-running ones."
+          - generic [ref=e316]:
+            - generic [ref=e317]:
+              - link "core/src/tools/runtimes/mod.rs" [ref=e318] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/tools/runtimes/mod.rs
+              - generic [ref=e319]: — runtime trait
+            - generic [ref=e320]:
+              - link "core/src/tools/runtimes/apply_patch.rs" [ref=e321] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/tools/runtimes/apply_patch.rs
+              - generic [ref=e322]: — apply-patch runtime
+            - generic [ref=e323]:
+              - link "core/src/tools/runtimes/shell.rs" [ref=e324] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/tools/runtimes/shell.rs
+              - generic [ref=e325]: — shell runtime
+            - generic [ref=e326]:
+              - link "core/src/tools/runtimes/unified_exec.rs" [ref=e327] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/tools/runtimes/unified_exec.rs
+              - generic [ref=e328]: — unified exec
+            - generic [ref=e329]:
+              - link "core/src/exec.rs" [ref=e330] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/exec.rs
+              - generic [ref=e331]: — exec primitive
+            - generic [ref=e332]:
+              - link "core/src/spawn.rs" [ref=e333] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/spawn.rs
+              - generic [ref=e334]: — process spawn
+            - generic [ref=e335]:
+              - link "core/src/shell.rs" [ref=e336] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/shell.rs
+              - generic [ref=e337]: — shell choice
+            - generic [ref=e338]:
+              - link "core/src/unified_exec" [ref=e339] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/unified_exec
+              - generic [ref=e340]: — (directory)
+      - article [ref=e341]:
+        - generic [ref=e342] [cursor=pointer]:
+          - generic [ref=e344]: apply-patch
+          - generic [ref=e345]: apply-patch
+          - generic [ref=e346]: ▾
+        - generic [ref=e347]:
+          - generic [ref=e348]: Standalone parser + applier for the V4A patch grammar used by the model to edit files.
+          - generic [ref=e349]:
+            - generic [ref=e350]:
+              - link "apply-patch/src/lib.rs" [ref=e351] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/apply-patch/src/lib.rs
+              - generic [ref=e352]: — crate root
+            - generic [ref=e353]:
+              - link "apply-patch/src/parser.rs" [ref=e354] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/apply-patch/src/parser.rs
+              - generic [ref=e355]: — patch parser
+            - generic [ref=e356]:
+              - link "apply-patch/src/streaming_parser.rs" [ref=e357] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/apply-patch/src/streaming_parser.rs
+              - generic [ref=e358]: — streaming parser
+            - generic [ref=e359]:
+              - link "apply-patch/src/invocation.rs" [ref=e360] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/apply-patch/src/invocation.rs
+              - generic [ref=e361]: — invocation
+            - generic [ref=e362]:
+              - link "apply-patch/src/seek_sequence.rs" [ref=e363] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/apply-patch/src/seek_sequence.rs
+              - generic [ref=e364]: — matcher
+            - generic [ref=e365]:
+              - link "apply-patch/src/main.rs" [ref=e366] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/apply-patch/src/main.rs
+              - generic [ref=e367]: — CLI shim
+      - article [ref=e368]:
+        - generic [ref=e369] [cursor=pointer]:
+          - generic [ref=e371]: Approval flow & safety
+          - generic [ref=e372]: core/src (safety.rs, exec_policy.rs, …)
+          - generic [ref=e373]: ▾
+        - generic [ref=e374]:
+          - generic [ref=e375]: "The pre-flight check before any tool actually runs: is this command on the policy allowlist, does it need an approval, is the destination writable, does the network rule apply?"
+          - generic [ref=e376]:
+            - generic [ref=e377]:
+              - link "core/src/safety.rs" [ref=e378] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/safety.rs
+              - generic [ref=e379]: — is-this-allowed?
+            - generic [ref=e380]:
+              - link "core/src/exec_policy.rs" [ref=e381] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/exec_policy.rs
+              - generic [ref=e382]: — command exec policy
+            - generic [ref=e383]:
+              - link "core/src/command_canonicalization.rs" [ref=e384] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/command_canonicalization.rs
+              - generic [ref=e385]: — canonicalize cmds
+            - generic [ref=e386]:
+              - link "core/src/tools/network_approval.rs" [ref=e387] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/tools/network_approval.rs
+              - generic [ref=e388]: — network approval gate
+            - generic [ref=e389]:
+              - link "config/src/permissions_toml.rs" [ref=e390] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/config/src/permissions_toml.rs
+              - generic [ref=e391]: — config schema
+            - generic [ref=e392]:
+              - link "core/src/context/permissions_instructions.rs" [ref=e393] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/context/permissions_instructions.rs
+              - generic [ref=e394]: — prompt injection
+            - generic [ref=e395]:
+              - link "core/src/context/network_rule_saved.rs" [ref=e396] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/context/network_rule_saved.rs
+              - generic [ref=e397]: — saved network rules
+            - generic [ref=e398]:
+              - link "core/src/context/approved_command_prefix_saved.rs" [ref=e399] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/context/approved_command_prefix_saved.rs
+              - generic [ref=e400]: — saved cmd prefixes
+      - article [ref=e401]:
+        - generic [ref=e402] [cursor=pointer]:
+          - generic [ref=e404]: Guardian (review)
+          - generic [ref=e405]: core/src/guardian, ext/guardian
+          - generic [ref=e406]: ▾
+        - generic [ref=e407]:
+          - generic [ref=e408]: Second-opinion reviewer that watches the agent's actions, blocks risky ones, and surfaces an explanation. Has its own prompt/policy template.
+          - generic [ref=e409]:
+            - generic [ref=e410]:
+              - link "core/src/guardian/mod.rs" [ref=e411] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/guardian/mod.rs
+              - generic [ref=e412]: — module root
+            - generic [ref=e413]:
+              - link "core/src/guardian/policy.md" [ref=e414] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/guardian/policy.md
+              - generic [ref=e415]: — policy (markdown)
+            - generic [ref=e416]:
+              - link "core/src/guardian/policy_template.md" [ref=e417] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/guardian/policy_template.md
+              - generic [ref=e418]: — policy template
+            - generic [ref=e419]:
+              - link "core/src/guardian/prompt.rs" [ref=e420] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/guardian/prompt.rs
+              - generic [ref=e421]: — guardian prompt
+            - generic [ref=e422]:
+              - link "core/src/guardian/review.rs" [ref=e423] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/guardian/review.rs
+              - generic [ref=e424]: — single review
+            - generic [ref=e425]:
+              - link "core/src/guardian/review_session.rs" [ref=e426] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/guardian/review_session.rs
+              - generic [ref=e427]: — review session
+            - generic [ref=e428]:
+              - link "core/src/guardian/approval_request.rs" [ref=e429] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/guardian/approval_request.rs
+              - generic [ref=e430]: — request to user
+            - generic [ref=e431]:
+              - link "ext/guardian/src/lib.rs" [ref=e432] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/ext/guardian/src/lib.rs
+              - generic [ref=e433]: — guardian extension
+      - article [ref=e434]:
+        - generic [ref=e435] [cursor=pointer]:
+          - generic [ref=e437]: Shell escalation
+          - generic [ref=e438]: shell-escalation
+          - generic [ref=e439]: ▾
+        - generic [ref=e440]:
+          - generic [ref=e441]: Helper used when a sandboxed command needs to escalate (sudo / askpass) without breaking the agent loop.
+          - generic [ref=e442]:
+            - generic [ref=e443]:
+              - link "shell-escalation/src/lib.rs" [ref=e444] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/shell-escalation/src/lib.rs
+              - generic [ref=e445]: — crate root
+            - generic [ref=e446]:
+              - link "shell-escalation/src/bin" [ref=e447] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/shell-escalation/src/bin
+              - generic [ref=e448]: — (bin directory)
+            - generic [ref=e449]:
+              - link "shell-escalation/src/unix" [ref=e450] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/shell-escalation/src/unix
+              - generic [ref=e451]: — (unix-specific helpers)
+      - article [ref=e452]:
+        - generic [ref=e453] [cursor=pointer]:
+          - generic [ref=e455]: Sandbox manager (cross-platform)
+          - generic [ref=e456]: sandboxing
+          - generic [ref=e457]: ▾
+        - generic [ref=e458]:
+          - generic [ref=e459]: Picks and configures the right sandbox per OS — Seatbelt (macOS), Landlock+bwrap (Linux), Windows restricted token. Holds the .sbpl policies.
+          - generic [ref=e460]:
+            - generic [ref=e461]:
+              - link "sandboxing/src/lib.rs" [ref=e462] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/sandboxing/src/lib.rs
+              - generic [ref=e463]: — crate root
+            - generic [ref=e464]:
+              - link "sandboxing/src/manager.rs" [ref=e465] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/sandboxing/src/manager.rs
+              - generic [ref=e466]: — platform manager
+            - generic [ref=e467]:
+              - link "sandboxing/src/policy_transforms.rs" [ref=e468] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/sandboxing/src/policy_transforms.rs
+              - generic [ref=e469]: — policy transforms
+            - generic [ref=e470]:
+              - link "sandboxing/src/seatbelt.rs" [ref=e471] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/sandboxing/src/seatbelt.rs
+              - generic [ref=e472]: — macOS seatbelt
+            - generic [ref=e473]:
+              - link "sandboxing/src/seatbelt_base_policy.sbpl" [ref=e474] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/sandboxing/src/seatbelt_base_policy.sbpl
+              - generic [ref=e475]: — base SBPL policy
+            - generic [ref=e476]:
+              - link "sandboxing/src/seatbelt_network_policy.sbpl" [ref=e477] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/sandboxing/src/seatbelt_network_policy.sbpl
+              - generic [ref=e478]: — network SBPL
+            - generic [ref=e479]:
+              - link "sandboxing/src/restricted_read_only_platform_defaults.sbpl" [ref=e480] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/sandboxing/src/restricted_read_only_platform_defaults.sbpl
+              - generic [ref=e481]: — read-only defaults
+            - generic [ref=e482]:
+              - link "sandboxing/src/landlock.rs" [ref=e483] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/sandboxing/src/landlock.rs
+              - generic [ref=e484]: — linux landlock
+            - generic [ref=e485]:
+              - link "sandboxing/src/bwrap.rs" [ref=e486] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/sandboxing/src/bwrap.rs
+              - generic [ref=e487]: — linux bwrap wrapper
+      - article [ref=e488]:
+        - generic [ref=e489] [cursor=pointer]:
+          - generic [ref=e491]: Linux sandbox (bwrap + landlock)
+          - generic [ref=e492]: linux-sandbox, bwrap
+          - generic [ref=e493]: ▾
+        - generic [ref=e494]:
+          - generic [ref=e495]: The Linux execution sandbox. Spawns bubblewrap with a tight mount namespace, layers landlock filesystem restrictions on top, and routes outgoing network through a proxy when needed.
+          - generic [ref=e496]:
+            - generic [ref=e497]:
+              - link "linux-sandbox/src/lib.rs" [ref=e498] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/linux-sandbox/src/lib.rs
+              - generic [ref=e499]: — crate root
+            - generic [ref=e500]:
+              - link "linux-sandbox/src/launcher.rs" [ref=e501] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/linux-sandbox/src/launcher.rs
+              - generic [ref=e502]: — launcher
+            - generic [ref=e503]:
+              - link "linux-sandbox/src/linux_run_main.rs" [ref=e504] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/linux-sandbox/src/linux_run_main.rs
+              - generic [ref=e505]: — main entry
+            - generic [ref=e506]:
+              - link "linux-sandbox/src/bwrap.rs" [ref=e507] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/linux-sandbox/src/bwrap.rs
+              - generic [ref=e508]: — bwrap invocation
+            - generic [ref=e509]:
+              - link "linux-sandbox/src/bundled_bwrap.rs" [ref=e510] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/linux-sandbox/src/bundled_bwrap.rs
+              - generic [ref=e511]: — bundled binary
+            - generic [ref=e512]:
+              - link "linux-sandbox/src/bazel_bwrap.rs" [ref=e513] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/linux-sandbox/src/bazel_bwrap.rs
+              - generic [ref=e514]: — bazel build path
+            - generic [ref=e515]:
+              - link "linux-sandbox/src/landlock.rs" [ref=e516] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/linux-sandbox/src/landlock.rs
+              - generic [ref=e517]: — landlock rules
+            - generic [ref=e518]:
+              - link "linux-sandbox/src/proxy_routing.rs" [ref=e519] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/linux-sandbox/src/proxy_routing.rs
+              - generic [ref=e520]: — network proxy routing
+            - generic [ref=e521]:
+              - link "linux-sandbox/src/exec_util.rs" [ref=e522] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/linux-sandbox/src/exec_util.rs
+              - generic [ref=e523]: — exec helpers
+            - generic [ref=e524]:
+              - link "bwrap/src/main.rs" [ref=e525] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/bwrap/src/main.rs
+              - generic [ref=e526]: — bwrap shim binary
+      - article [ref=e527]:
+        - generic [ref=e528] [cursor=pointer]:
+          - generic [ref=e530]: Windows sandbox
+          - generic [ref=e531]: windows-sandbox-rs
+          - generic [ref=e532]: ▾
+        - generic [ref=e533]:
+          - generic [ref=e534]: "Windows path: restricted tokens, deny ACLs, WFP for network, a hidden desktop, and capability mappings. Large surface — these are the most central files."
+          - generic [ref=e535]:
+            - generic [ref=e536]:
+              - link "windows-sandbox-rs/src/lib.rs" [ref=e537] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/windows-sandbox-rs/src/lib.rs
+              - generic [ref=e538]: — crate root
+            - generic [ref=e539]:
+              - link "windows-sandbox-rs/src/setup.rs" [ref=e540] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/windows-sandbox-rs/src/setup.rs
+              - generic [ref=e541]: — sandbox setup
+            - generic [ref=e542]:
+              - link "windows-sandbox-rs/src/policy.rs" [ref=e543] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/windows-sandbox-rs/src/policy.rs
+              - generic [ref=e544]: — policy model
+            - generic [ref=e545]:
+              - link "windows-sandbox-rs/src/token.rs" [ref=e546] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/windows-sandbox-rs/src/token.rs
+              - generic [ref=e547]: — restricted token
+            - generic [ref=e548]:
+              - link "windows-sandbox-rs/src/acl.rs" [ref=e549] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/windows-sandbox-rs/src/acl.rs
+              - generic [ref=e550]: — ACLs
+            - generic [ref=e551]:
+              - link "windows-sandbox-rs/src/deny_read_acl.rs" [ref=e552] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/windows-sandbox-rs/src/deny_read_acl.rs
+              - generic [ref=e553]: — deny-read ACL
+            - generic [ref=e554]:
+              - link "windows-sandbox-rs/src/wfp.rs" [ref=e555] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/windows-sandbox-rs/src/wfp.rs
+              - generic [ref=e556]: — Windows Filtering Platform
+            - generic [ref=e557]:
+              - link "windows-sandbox-rs/src/wfp_setup.rs" [ref=e558] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/windows-sandbox-rs/src/wfp_setup.rs
+              - generic [ref=e559]: — WFP setup
+            - generic [ref=e560]:
+              - link "windows-sandbox-rs/src/desktop.rs" [ref=e561] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/windows-sandbox-rs/src/desktop.rs
+              - generic [ref=e562]: — hidden desktop
+            - generic [ref=e563]:
+              - link "windows-sandbox-rs/src/process.rs" [ref=e564] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/windows-sandbox-rs/src/process.rs
+              - generic [ref=e565]: — process spawn
+            - generic [ref=e566]:
+              - link "windows-sandbox-rs/src/spawn_prep.rs" [ref=e567] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/windows-sandbox-rs/src/spawn_prep.rs
+              - generic [ref=e568]: — spawn prep
+            - generic [ref=e569]:
+              - link "windows-sandbox-rs/src/workspace_acl.rs" [ref=e570] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/windows-sandbox-rs/src/workspace_acl.rs
+              - generic [ref=e571]: — workspace ACL
+      - article [ref=e572]:
+        - generic [ref=e573] [cursor=pointer]:
+          - generic [ref=e575]: Process hardening
+          - generic [ref=e576]: process-hardening
+          - generic [ref=e577]: ▾
+        - generic [ref=e578]:
+          - generic [ref=e579]: "Cross-cutting hardening applied to any spawned helper: rlimits, file descriptor hygiene, signal masks."
+          - generic [ref=e581]:
+            - link "process-hardening/src/lib.rs" [ref=e582] [cursor=pointer]:
+              - /url: file:///home/mihai/workshop/codex/codex-rs/process-hardening/src/lib.rs
+            - generic [ref=e583]: — crate root
+      - article [ref=e584]:
+        - generic [ref=e585] [cursor=pointer]:
+          - generic [ref=e587]: Sandbox glue in core
+          - generic [ref=e588]: core/src
+          - generic [ref=e589]: ▾
+        - generic [ref=e590]:
+          - generic [ref=e591]: Where the core agent loop chooses a sandbox profile per call, tags the rollout, and surfaces failures back to the model.
+          - generic [ref=e592]:
+            - generic [ref=e593]:
+              - link "core/src/sandboxing/mod.rs" [ref=e594] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/sandboxing/mod.rs
+              - generic [ref=e595]: — core/sandboxing glue
+            - generic [ref=e596]:
+              - link "core/src/sandbox_tags.rs" [ref=e597] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/sandbox_tags.rs
+              - generic [ref=e598]: — sandbox tagging
+            - generic [ref=e599]:
+              - link "core/src/landlock.rs" [ref=e600] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/landlock.rs
+              - generic [ref=e601]: — landlock glue
+            - generic [ref=e602]:
+              - link "core/src/windows_sandbox.rs" [ref=e603] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/windows_sandbox.rs
+              - generic [ref=e604]: — windows glue
+            - generic [ref=e605]:
+              - link "core/src/windows_sandbox_read_grants.rs" [ref=e606] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/windows_sandbox_read_grants.rs
+              - generic [ref=e607]: — windows read grants
+            - generic [ref=e608]:
+              - link "core/src/tools/sandboxing.rs" [ref=e609] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/tools/sandboxing.rs
+              - generic [ref=e610]: — per-tool sandbox config
+      - article [ref=e611]:
+        - generic [ref=e612] [cursor=pointer]:
+          - generic [ref=e614]: Plugin core (id, manifest, loader)
+          - generic [ref=e615]: plugin, core-plugins
+          - generic [ref=e616]: ▾
+        - generic [ref=e617]:
+          - generic [ref=e618]: The plugin format itself — id, manifest, install/remove, marketplace sync. A plugin can contribute commands, agents, skills, hooks, and MCP servers.
+          - generic [ref=e619]:
+            - generic [ref=e620]:
+              - link "plugin/src/lib.rs" [ref=e621] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/plugin/src/lib.rs
+              - generic [ref=e622]: — plugin crate root
+            - generic [ref=e623]:
+              - link "plugin/src/plugin_id.rs" [ref=e624] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/plugin/src/plugin_id.rs
+              - generic [ref=e625]: — plugin id
+            - generic [ref=e626]:
+              - link "plugin/src/load_outcome.rs" [ref=e627] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/plugin/src/load_outcome.rs
+              - generic [ref=e628]: — load result
+            - generic [ref=e629]:
+              - link "core-plugins/src/lib.rs" [ref=e630] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core-plugins/src/lib.rs
+              - generic [ref=e631]: — manager crate root
+            - generic [ref=e632]:
+              - link "core-plugins/src/manifest.rs" [ref=e633] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core-plugins/src/manifest.rs
+              - generic [ref=e634]: — manifest schema
+            - generic [ref=e635]:
+              - link "core-plugins/src/loader.rs" [ref=e636] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core-plugins/src/loader.rs
+              - generic [ref=e637]: — loader
+            - generic [ref=e638]:
+              - link "core-plugins/src/manager.rs" [ref=e639] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core-plugins/src/manager.rs
+              - generic [ref=e640]: — lifecycle manager
+            - generic [ref=e641]:
+              - link "core-plugins/src/store.rs" [ref=e642] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core-plugins/src/store.rs
+              - generic [ref=e643]: — installed store
+            - generic [ref=e644]:
+              - link "core-plugins/src/toggles.rs" [ref=e645] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core-plugins/src/toggles.rs
+              - generic [ref=e646]: — enable/disable
+      - article [ref=e647]:
+        - generic [ref=e648] [cursor=pointer]:
+          - generic [ref=e650]: Plugin marketplace
+          - generic [ref=e651]: core-plugins
+          - generic [ref=e652]: ▾
+        - generic [ref=e653]:
+          - generic [ref=e654]: "Discovery + remote sync for plugins: how a marketplace add or startup remote sync fetches and verifies plugin bundles."
+          - generic [ref=e655]:
+            - generic [ref=e656]:
+              - link "core-plugins/src/marketplace.rs" [ref=e657] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core-plugins/src/marketplace.rs
+              - generic [ref=e658]: — marketplace core
+            - generic [ref=e659]:
+              - link "core-plugins/src/marketplace_add.rs" [ref=e660] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core-plugins/src/marketplace_add.rs
+              - generic [ref=e661]: — add command
+            - generic [ref=e662]:
+              - link "core-plugins/src/marketplace_remove.rs" [ref=e663] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core-plugins/src/marketplace_remove.rs
+              - generic [ref=e664]: — remove command
+            - generic [ref=e665]:
+              - link "core-plugins/src/marketplace_upgrade.rs" [ref=e666] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core-plugins/src/marketplace_upgrade.rs
+              - generic [ref=e667]: — upgrade command
+            - generic [ref=e668]:
+              - link "core-plugins/src/installed_marketplaces.rs" [ref=e669] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core-plugins/src/installed_marketplaces.rs
+              - generic [ref=e670]: — installed list
+            - generic [ref=e671]:
+              - link "core-plugins/src/remote.rs" [ref=e672] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core-plugins/src/remote.rs
+              - generic [ref=e673]: — remote fetch
+            - generic [ref=e674]:
+              - link "core-plugins/src/remote_bundle.rs" [ref=e675] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core-plugins/src/remote_bundle.rs
+              - generic [ref=e676]: — bundle handling
+            - generic [ref=e677]:
+              - link "core-plugins/src/remote_legacy.rs" [ref=e678] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core-plugins/src/remote_legacy.rs
+              - generic [ref=e679]: — legacy remote
+            - generic [ref=e680]:
+              - link "core-plugins/src/startup_remote_sync.rs" [ref=e681] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core-plugins/src/startup_remote_sync.rs
+              - generic [ref=e682]: — startup sync
+            - generic [ref=e683]:
+              - link "core-plugins/src/plugin_bundle_archive.rs" [ref=e684] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core-plugins/src/plugin_bundle_archive.rs
+              - generic [ref=e685]: — bundle archive
+      - article [ref=e686]:
+        - generic [ref=e687] [cursor=pointer]:
+          - generic [ref=e689]: Skills
+          - generic [ref=e690]: skills, core-skills
+          - generic [ref=e691]: ▾
+        - generic [ref=e692]:
+          - generic [ref=e693]: "Skills are a lighter-weight contribution than plugins: declarative units that get surfaced to the model alongside tools. The system handles loading, mention-based invocation, and prompt injection."
+          - generic [ref=e694]:
+            - generic [ref=e695]:
+              - link "skills/src/lib.rs" [ref=e696] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/skills/src/lib.rs
+              - generic [ref=e697]: — skills (assets)
+            - generic [ref=e698]:
+              - link "core-skills/src/lib.rs" [ref=e699] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core-skills/src/lib.rs
+              - generic [ref=e700]: — core-skills root
+            - generic [ref=e701]:
+              - link "core-skills/src/loader.rs" [ref=e702] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core-skills/src/loader.rs
+              - generic [ref=e703]: — loader
+            - generic [ref=e704]:
+              - link "core-skills/src/manager.rs" [ref=e705] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core-skills/src/manager.rs
+              - generic [ref=e706]: — manager
+            - generic [ref=e707]:
+              - link "core-skills/src/injection.rs" [ref=e708] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core-skills/src/injection.rs
+              - generic [ref=e709]: — prompt injection
+            - generic [ref=e710]:
+              - link "core-skills/src/invocation_utils.rs" [ref=e711] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core-skills/src/invocation_utils.rs
+              - generic [ref=e712]: — invocation utils
+            - generic [ref=e713]:
+              - link "core-skills/src/model.rs" [ref=e714] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core-skills/src/model.rs
+              - generic [ref=e715]: — model
+            - generic [ref=e716]:
+              - link "core-skills/src/render.rs" [ref=e717] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core-skills/src/render.rs
+              - generic [ref=e718]: — rendering
+            - generic [ref=e719]:
+              - link "core-skills/src/system.rs" [ref=e720] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core-skills/src/system.rs
+              - generic [ref=e721]: — system skills
+            - generic [ref=e722]:
+              - link "core-skills/src/remote.rs" [ref=e723] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core-skills/src/remote.rs
+              - generic [ref=e724]: — remote skills
+      - article [ref=e725]:
+        - generic [ref=e726] [cursor=pointer]:
+          - generic [ref=e728]: Hooks
+          - generic [ref=e729]: hooks
+          - generic [ref=e730]: ▾
+        - generic [ref=e731]:
+          - generic [ref=e732]: User-defined automation that fires on events (PreToolUse, PostToolUse, Stop, …). The registry, schema, and the engine that executes hook commands.
+          - generic [ref=e733]:
+            - generic [ref=e734]:
+              - link "hooks/src/lib.rs" [ref=e735] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/hooks/src/lib.rs
+              - generic [ref=e736]: — crate root
+            - generic [ref=e737]:
+              - link "hooks/src/registry.rs" [ref=e738] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/hooks/src/registry.rs
+              - generic [ref=e739]: — registry
+            - generic [ref=e740]:
+              - link "hooks/src/schema.rs" [ref=e741] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/hooks/src/schema.rs
+              - generic [ref=e742]: — hook schema
+            - generic [ref=e743]:
+              - link "hooks/src/types.rs" [ref=e744] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/hooks/src/types.rs
+              - generic [ref=e745]: — types
+            - generic [ref=e746]:
+              - link "hooks/src/declarations.rs" [ref=e747] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/hooks/src/declarations.rs
+              - generic [ref=e748]: — declarations
+            - generic [ref=e749]:
+              - link "hooks/src/config_rules.rs" [ref=e750] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/hooks/src/config_rules.rs
+              - generic [ref=e751]: — config rules
+            - generic [ref=e752]:
+              - link "hooks/src/engine" [ref=e753] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/hooks/src/engine
+              - generic [ref=e754]: — (engine directory)
+            - generic [ref=e755]:
+              - link "hooks/src/events" [ref=e756] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/hooks/src/events
+              - generic [ref=e757]: — (events directory)
+            - generic [ref=e758]:
+              - link "hooks/src/output_spill.rs" [ref=e759] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/hooks/src/output_spill.rs
+              - generic [ref=e760]: — output spill
+            - generic [ref=e761]:
+              - link "hooks/src/legacy_notify.rs" [ref=e762] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/hooks/src/legacy_notify.rs
+              - generic [ref=e763]: — legacy notify
+            - generic [ref=e764]:
+              - link "core/src/hook_runtime.rs" [ref=e765] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/hook_runtime.rs
+              - generic [ref=e766]: — core-side runtime
+      - article [ref=e767]:
+        - generic [ref=e768] [cursor=pointer]:
+          - generic [ref=e770]: MCP integration
+          - generic [ref=e771]: codex-mcp, mcp-server, rmcp-client
+          - generic [ref=e772]: ▾
+        - generic [ref=e773]:
+          - generic [ref=e774]: Codex is both an MCP client (consumes external tool servers) and an MCP server (lets other agents drive it). Plugins commonly contribute MCP servers, so this sits alongside plugin loading.
+          - generic [ref=e775]:
+            - generic [ref=e776]:
+              - link "codex-mcp/src/lib.rs" [ref=e777] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/codex-mcp/src/lib.rs
+              - generic [ref=e778]: — MCP crate root
+            - generic [ref=e779]:
+              - link "codex-mcp/src/server.rs" [ref=e780] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/codex-mcp/src/server.rs
+              - generic [ref=e781]: — MCP server
+            - generic [ref=e782]:
+              - link "codex-mcp/src/runtime.rs" [ref=e783] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/codex-mcp/src/runtime.rs
+              - generic [ref=e784]: — MCP runtime
+            - generic [ref=e785]:
+              - link "codex-mcp/src/connection_manager.rs" [ref=e786] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/codex-mcp/src/connection_manager.rs
+              - generic [ref=e787]: — connection manager
+            - generic [ref=e788]:
+              - link "codex-mcp/src/tools.rs" [ref=e789] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/codex-mcp/src/tools.rs
+              - generic [ref=e790]: — tools bridge
+            - generic [ref=e791]:
+              - link "codex-mcp/src/elicitation.rs" [ref=e792] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/codex-mcp/src/elicitation.rs
+              - generic [ref=e793]: — elicitation
+            - generic [ref=e794]:
+              - link "codex-mcp/src/rmcp_client.rs" [ref=e795] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/codex-mcp/src/rmcp_client.rs
+              - generic [ref=e796]: — remote MCP client
+            - generic [ref=e797]:
+              - link "mcp-server/src" [ref=e798] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/mcp-server/src
+              - generic [ref=e799]: — (mcp-server crate)
+            - generic [ref=e800]:
+              - link "rmcp-client/src" [ref=e801] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/rmcp-client/src
+              - generic [ref=e802]: — (rmcp-client crate)
+            - generic [ref=e803]:
+              - link "core/src/mcp.rs" [ref=e804] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/mcp.rs
+              - generic [ref=e805]: — core-side MCP
+      - article [ref=e806]:
+        - generic [ref=e807] [cursor=pointer]:
+          - generic [ref=e809]: Extension API
+          - generic [ref=e810]: ext/extension-api
+          - generic [ref=e811]: ▾
+        - generic [ref=e812]:
+          - generic [ref=e813]: Internal extension surface used by goal / guardian / memories. Defines capabilities, contributors, and the registry that wires them into the loop.
+          - generic [ref=e814]:
+            - generic [ref=e815]:
+              - link "ext/extension-api/src/lib.rs" [ref=e816] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/ext/extension-api/src/lib.rs
+              - generic [ref=e817]: — crate root
+            - generic [ref=e818]:
+              - link "ext/extension-api/src/registry.rs" [ref=e819] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/ext/extension-api/src/registry.rs
+              - generic [ref=e820]: — registry
+            - generic [ref=e821]:
+              - link "ext/extension-api/src/state.rs" [ref=e822] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/ext/extension-api/src/state.rs
+              - generic [ref=e823]: — state
+            - generic [ref=e824]:
+              - link "ext/extension-api/src/capabilities" [ref=e825] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/ext/extension-api/src/capabilities
+              - generic [ref=e826]: — (capabilities/)
+            - generic [ref=e827]:
+              - link "ext/extension-api/src/contributors.rs" [ref=e828] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/ext/extension-api/src/contributors.rs
+              - generic [ref=e829]: — contributors
+            - generic [ref=e830]:
+              - link "ext/extension-api/src/contributors" [ref=e831] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/ext/extension-api/src/contributors
+              - generic [ref=e832]: — (contributors/)
+      - article [ref=e833]:
+        - generic [ref=e834] [cursor=pointer]:
+          - generic [ref=e836]: Goal extension
+          - generic [ref=e837]: ext/goal
+          - generic [ref=e838]: ▾
+        - generic [ref=e839]:
+          - generic [ref=e840]: "Tracks a per-conversation goal: a tool for setting it, runtime steering hooks, and accounting of progress."
+          - generic [ref=e841]:
+            - generic [ref=e842]:
+              - link "ext/goal/src/lib.rs" [ref=e843] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/ext/goal/src/lib.rs
+              - generic [ref=e844]: — crate root
+            - generic [ref=e845]:
+              - link "ext/goal/src/extension.rs" [ref=e846] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/ext/goal/src/extension.rs
+              - generic [ref=e847]: — extension wiring
+            - generic [ref=e848]:
+              - link "ext/goal/src/runtime.rs" [ref=e849] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/ext/goal/src/runtime.rs
+              - generic [ref=e850]: — runtime
+            - generic [ref=e851]:
+              - link "ext/goal/src/steering.rs" [ref=e852] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/ext/goal/src/steering.rs
+              - generic [ref=e853]: — steering
+            - generic [ref=e854]:
+              - link "ext/goal/src/spec.rs" [ref=e855] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/ext/goal/src/spec.rs
+              - generic [ref=e856]: — spec
+            - generic [ref=e857]:
+              - link "ext/goal/src/tool.rs" [ref=e858] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/ext/goal/src/tool.rs
+              - generic [ref=e859]: — goal tool
+            - generic [ref=e860]:
+              - link "ext/goal/src/accounting.rs" [ref=e861] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/ext/goal/src/accounting.rs
+              - generic [ref=e862]: — accounting
+            - generic [ref=e863]:
+              - link "ext/goal/src/events.rs" [ref=e864] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/ext/goal/src/events.rs
+              - generic [ref=e865]: — events
+      - article [ref=e866]:
+        - generic [ref=e867] [cursor=pointer]:
+          - generic [ref=e869]: Memories extension
+          - generic [ref=e870]: "ext/memories, memories/{read,write}"
+          - generic [ref=e871]: ▾
+        - generic [ref=e872]:
+          - generic [ref=e873]: Persistent agent memory. The extension exposes tools, the read crate fetches & cites, the write crate runs the two-phase write/guard pipeline.
+          - generic [ref=e874]:
+            - generic [ref=e875]:
+              - link "ext/memories/src/lib.rs" [ref=e876] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/ext/memories/src/lib.rs
+              - generic [ref=e877]: — crate root
+            - generic [ref=e878]:
+              - link "ext/memories/src/extension.rs" [ref=e879] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/ext/memories/src/extension.rs
+              - generic [ref=e880]: — extension wiring
+            - generic [ref=e881]:
+              - link "ext/memories/src/backend.rs" [ref=e882] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/ext/memories/src/backend.rs
+              - generic [ref=e883]: — backend trait
+            - generic [ref=e884]:
+              - link "ext/memories/src/schema.rs" [ref=e885] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/ext/memories/src/schema.rs
+              - generic [ref=e886]: — schema
+            - generic [ref=e887]:
+              - link "ext/memories/src/prompts.rs" [ref=e888] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/ext/memories/src/prompts.rs
+              - generic [ref=e889]: — prompt fragments
+            - generic [ref=e890]:
+              - link "ext/memories/src/tools" [ref=e891] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/ext/memories/src/tools
+              - generic [ref=e892]: — (tools dir)
+            - generic [ref=e893]:
+              - link "memories/read/src/lib.rs" [ref=e894] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/memories/read/src/lib.rs
+              - generic [ref=e895]: — read root
+            - generic [ref=e896]:
+              - link "memories/read/src/citations.rs" [ref=e897] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/memories/read/src/citations.rs
+              - generic [ref=e898]: — citations
+            - generic [ref=e899]:
+              - link "memories/read/src/metrics.rs" [ref=e900] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/memories/read/src/metrics.rs
+              - generic [ref=e901]: — metrics
+            - generic [ref=e902]:
+              - link "memories/write/src/lib.rs" [ref=e903] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/memories/write/src/lib.rs
+              - generic [ref=e904]: — write root
+            - generic [ref=e905]:
+              - link "memories/write/src/phase1.rs" [ref=e906] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/memories/write/src/phase1.rs
+              - generic [ref=e907]: — phase 1 (propose)
+            - generic [ref=e908]:
+              - link "memories/write/src/phase2.rs" [ref=e909] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/memories/write/src/phase2.rs
+              - generic [ref=e910]: — phase 2 (commit)
+            - generic [ref=e911]:
+              - link "memories/write/src/guard.rs" [ref=e912] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/memories/write/src/guard.rs
+              - generic [ref=e913]: — guard
+            - generic [ref=e914]:
+              - link "memories/write/src/storage.rs" [ref=e915] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/memories/write/src/storage.rs
+              - generic [ref=e916]: — storage
+            - generic [ref=e917]:
+              - link "memories/write/src/workspace.rs" [ref=e918] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/memories/write/src/workspace.rs
+              - generic [ref=e919]: — workspace
+      - article [ref=e920]:
+        - generic [ref=e921] [cursor=pointer]:
+          - generic [ref=e923]: CLI multitool
+          - generic [ref=e924]: cli
+          - generic [ref=e925]: ▾
+        - generic [ref=e926]:
+          - generic [ref=e927]: Entry binary. Dispatches to tui, exec, mcp, sandbox, doctor, plugin/marketplace subcommands.
+          - generic [ref=e928]:
+            - generic [ref=e929]:
+              - link "cli/src/main.rs" [ref=e930] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/cli/src/main.rs
+              - generic [ref=e931]: — binary entry
+            - generic [ref=e932]:
+              - link "cli/src/lib.rs" [ref=e933] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/cli/src/lib.rs
+              - generic [ref=e934]: — shared cli
+            - generic [ref=e935]:
+              - link "cli/src/app_cmd.rs" [ref=e936] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/cli/src/app_cmd.rs
+              - generic [ref=e937]: — app command
+            - generic [ref=e938]:
+              - link "cli/src/debug_sandbox.rs" [ref=e939] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/cli/src/debug_sandbox.rs
+              - generic [ref=e940]: — sandbox subcmd
+            - generic [ref=e941]:
+              - link "cli/src/doctor.rs" [ref=e942] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/cli/src/doctor.rs
+              - generic [ref=e943]: — doctor
+            - generic [ref=e944]:
+              - link "cli/src/login.rs" [ref=e945] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/cli/src/login.rs
+              - generic [ref=e946]: — login
+            - generic [ref=e947]:
+              - link "cli/src/marketplace_cmd.rs" [ref=e948] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/cli/src/marketplace_cmd.rs
+              - generic [ref=e949]: — marketplace cmd
+            - generic [ref=e950]:
+              - link "cli/src/mcp_cmd.rs" [ref=e951] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/cli/src/mcp_cmd.rs
+              - generic [ref=e952]: — mcp cmd
+            - generic [ref=e953]:
+              - link "cli/src/plugin_cmd.rs" [ref=e954] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/cli/src/plugin_cmd.rs
+              - generic [ref=e955]: — plugin cmd
+      - article [ref=e956]:
+        - generic [ref=e957] [cursor=pointer]:
+          - generic [ref=e959]: TUI (Ratatui)
+          - generic [ref=e960]: tui
+          - generic [ref=e961]: ▾
+        - generic [ref=e962]:
+          - generic [ref=e963]: The interactive fullscreen UI. App loop, chat widget, history cells, approval prompts, keymap, onboarding.
+          - generic [ref=e964]:
+            - generic [ref=e965]:
+              - link "tui/src/main.rs" [ref=e966] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/tui/src/main.rs
+              - generic [ref=e967]: — binary entry
+            - generic [ref=e968]:
+              - link "tui/src/lib.rs" [ref=e969] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/tui/src/lib.rs
+              - generic [ref=e970]: — lib root
+            - generic [ref=e971]:
+              - link "tui/src/app.rs" [ref=e972] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/tui/src/app.rs
+              - generic [ref=e973]: — app loop
+            - generic [ref=e974]:
+              - link "tui/src/chatwidget.rs" [ref=e975] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/tui/src/chatwidget.rs
+              - generic [ref=e976]: — chat widget
+            - generic [ref=e977]:
+              - link "tui/src/keymap.rs" [ref=e978] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/tui/src/keymap.rs
+              - generic [ref=e979]: — keymap
+            - generic [ref=e980]:
+              - link "tui/src/approval_events.rs" [ref=e981] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/tui/src/approval_events.rs
+              - generic [ref=e982]: — approval prompts
+            - generic [ref=e983]:
+              - link "tui/src/diff_render.rs" [ref=e984] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/tui/src/diff_render.rs
+              - generic [ref=e985]: — diff renderer
+            - generic [ref=e986]:
+              - link "tui/src/markdown_render.rs" [ref=e987] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/tui/src/markdown_render.rs
+              - generic [ref=e988]: — markdown render
+            - generic [ref=e989]:
+              - link "tui/src/hooks_rpc.rs" [ref=e990] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/tui/src/hooks_rpc.rs
+              - generic [ref=e991]: — hooks RPC
+      - article [ref=e992]:
+        - generic [ref=e993] [cursor=pointer]:
+          - generic [ref=e995]: Headless exec
+          - generic [ref=e996]: exec
+          - generic [ref=e997]: ▾
+        - generic [ref=e998]:
+          - generic [ref=e999]: Non-interactive runner — used in scripts and CI. Streams events in human or JSONL form.
+          - generic [ref=e1000]:
+            - generic [ref=e1001]:
+              - link "exec/src/main.rs" [ref=e1002] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/exec/src/main.rs
+              - generic [ref=e1003]: — binary entry
+            - generic [ref=e1004]:
+              - link "exec/src/lib.rs" [ref=e1005] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/exec/src/lib.rs
+              - generic [ref=e1006]: — lib
+            - generic [ref=e1007]:
+              - link "exec/src/cli.rs" [ref=e1008] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/exec/src/cli.rs
+              - generic [ref=e1009]: — cli args
+            - generic [ref=e1010]:
+              - link "exec/src/event_processor.rs" [ref=e1011] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/exec/src/event_processor.rs
+              - generic [ref=e1012]: — event processor
+            - generic [ref=e1013]:
+              - link "exec/src/event_processor_with_human_output.rs" [ref=e1014] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/exec/src/event_processor_with_human_output.rs
+              - generic [ref=e1015]: — human output
+            - generic [ref=e1016]:
+              - link "exec/src/event_processor_with_jsonl_output.rs" [ref=e1017] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/exec/src/event_processor_with_jsonl_output.rs
+              - generic [ref=e1018]: — JSONL output
+            - generic [ref=e1019]:
+              - link "exec/src/exec_events.rs" [ref=e1020] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/exec/src/exec_events.rs
+              - generic [ref=e1021]: — event shape
+      - article [ref=e1022]:
+        - generic [ref=e1023] [cursor=pointer]:
+          - generic [ref=e1025]: Protocol & rollout
+          - generic [ref=e1026]: protocol, rollout, rollout-trace
+          - generic [ref=e1027]: ▾
+        - generic [ref=e1028]:
+          - generic [ref=e1029]: On-the-wire types shared across the CLI surfaces, plus the rollout that persists each turn so a thread can be replayed or migrated.
+          - generic [ref=e1030]:
+            - generic [ref=e1031]:
+              - link "protocol/src" [ref=e1032] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/protocol/src
+              - generic [ref=e1033]: — (protocol/ crate)
+            - generic [ref=e1034]:
+              - link "rollout/src" [ref=e1035] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/rollout/src
+              - generic [ref=e1036]: — (rollout/ crate)
+            - generic [ref=e1037]:
+              - link "rollout-trace/src" [ref=e1038] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/rollout-trace/src
+              - generic [ref=e1039]: — (rollout-trace/ crate)
+            - generic [ref=e1040]:
+              - link "core/src/rollout.rs" [ref=e1041] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/rollout.rs
+              - generic [ref=e1042]: — core-side rollout
+            - generic [ref=e1043]:
+              - link "core/src/protocol.rs" [ref=e1044] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/core/src/protocol.rs
+              - generic [ref=e1045]: — core-side protocol
+      - article [ref=e1046]:
+        - generic [ref=e1047] [cursor=pointer]:
+          - generic [ref=e1049]: Config
+          - generic [ref=e1050]: config
+          - generic [ref=e1051]: ▾
+        - generic [ref=e1052]:
+          - generic [ref=e1053]: Loading & validating config.toml, the permission TOML, MCP TOML, plugin/marketplace TOML, profile TOML. The single source of truth for what a session looks like before it starts.
+          - generic [ref=e1054]:
+            - generic [ref=e1055]:
+              - link "config/src/lib.rs" [ref=e1056] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/config/src/lib.rs
+              - generic [ref=e1057]: — crate root
+            - generic [ref=e1058]:
+              - link "config/src/loader" [ref=e1059] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/config/src/loader
+              - generic [ref=e1060]: — (loader/)
+            - generic [ref=e1061]:
+              - link "config/src/config_toml.rs" [ref=e1062] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/config/src/config_toml.rs
+              - generic [ref=e1063]: — main config schema
+            - generic [ref=e1064]:
+              - link "config/src/permissions_toml.rs" [ref=e1065] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/config/src/permissions_toml.rs
+              - generic [ref=e1066]: — permissions schema
+            - generic [ref=e1067]:
+              - link "config/src/plugin_edit.rs" [ref=e1068] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/config/src/plugin_edit.rs
+              - generic [ref=e1069]: — plugin editing
+            - generic [ref=e1070]:
+              - link "config/src/marketplace_edit.rs" [ref=e1071] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/config/src/marketplace_edit.rs
+              - generic [ref=e1072]: — marketplace editing
+            - generic [ref=e1073]:
+              - link "config/src/mcp_edit.rs" [ref=e1074] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/config/src/mcp_edit.rs
+              - generic [ref=e1075]: — mcp editing
+            - generic [ref=e1076]:
+              - link "config/src/profile_toml.rs" [ref=e1077] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/config/src/profile_toml.rs
+              - generic [ref=e1078]: — profile schema
+            - generic [ref=e1079]:
+              - link "config/src/skills_config.rs" [ref=e1080] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/config/src/skills_config.rs
+              - generic [ref=e1081]: — skills config
+            - generic [ref=e1082]:
+              - link "config/src/strict_config.rs" [ref=e1083] [cursor=pointer]:
+                - /url: file:///home/mihai/workshop/codex/codex-rs/config/src/strict_config.rs
+              - generic [ref=e1084]: — strict validation
+  - contentinfo [ref=e1085]:
+    - text: "Source root:"
+    - generic [ref=e1086]: /home/mihai/workshop/codex/codex-rs
+    - text: · Workspace defined in
+    - link "Cargo.toml" [ref=e1087] [cursor=pointer]:
+      - /url: file:///home/mihai/workshop/codex/codex-rs/Cargo.toml
+    - text: "· Top-level overview:"
+    - link "README.md" [ref=e1088] [cursor=pointer]:
+      - /url: file:///home/mihai/workshop/codex/codex-rs/README.md

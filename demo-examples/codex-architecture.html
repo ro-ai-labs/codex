@@ -1,0 +1,945 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Codex — Module Architecture</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root {
+    --bg: #0e1117;
+    --panel: #161b22;
+    --panel-2: #1c232c;
+    --line: #2a313c;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --accent: #7ee787;
+    --link: #79c0ff;
+    --shadow: 0 8px 24px rgba(0,0,0,.35);
+
+    --c-loop:    #ffb86b;
+    --c-tools:   #7ee787;
+    --c-perm:    #f08fa3;
+    --c-sandbox: #c8a8ff;
+    --c-plugin:  #79c0ff;
+    --c-ext:     #f1e05a;
+    --c-iface:   #6ee7d6;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Arial, sans-serif; }
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code, .mono { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; }
+
+  header {
+    padding: 28px 36px 18px;
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, #11161d 0%, #0e1117 100%);
+  }
+  header h1 {
+    margin: 0 0 6px 0;
+    font-size: 22px;
+    letter-spacing: 0.3px;
+  }
+  header h1 .badge {
+    display: inline-block;
+    margin-left: 10px;
+    padding: 2px 8px;
+    font-size: 11px;
+    color: #0e1117;
+    background: var(--accent);
+    border-radius: 10px;
+    vertical-align: middle;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  header p { margin: 4px 0 0; color: var(--muted); font-size: 13.5px; max-width: 920px; line-height: 1.55; }
+
+  .controls {
+    margin-top: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+  .controls input[type="search"] {
+    flex: 1 1 280px;
+    max-width: 420px;
+    padding: 8px 12px;
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-size: 13px;
+    outline: none;
+  }
+  .controls input[type="search"]:focus { border-color: var(--link); }
+  .filter-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    user-select: none;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 5px 10px;
+    border-radius: 14px;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    color: var(--muted);
+    transition: all .15s ease;
+  }
+  .chip:hover { color: var(--text); }
+  .chip.active { color: #0e1117; font-weight: 600; }
+  .chip[data-cat="loop"].active    { background: var(--c-loop);    border-color: var(--c-loop); }
+  .chip[data-cat="tools"].active   { background: var(--c-tools);   border-color: var(--c-tools); }
+  .chip[data-cat="perm"].active    { background: var(--c-perm);    border-color: var(--c-perm); }
+  .chip[data-cat="sandbox"].active { background: var(--c-sandbox); border-color: var(--c-sandbox); }
+  .chip[data-cat="plugin"].active  { background: var(--c-plugin);  border-color: var(--c-plugin); }
+  .chip[data-cat="ext"].active     { background: var(--c-ext);     border-color: var(--c-ext); }
+  .chip[data-cat="iface"].active   { background: var(--c-iface);   border-color: var(--c-iface); }
+
+  main {
+    padding: 24px 36px 60px;
+    max-width: 1500px;
+    margin: 0 auto;
+  }
+
+  .row-banner {
+    margin: 20px 0 8px;
+    color: var(--muted);
+    font-size: 11.5px;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+  }
+
+  .grid {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+  }
+
+  .module {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform .12s ease, border-color .12s ease;
+  }
+  .module:hover { transform: translateY(-1px); }
+
+  .module > header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: none;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    cursor: pointer;
+    user-select: none;
+  }
+  .module > header .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex: 0 0 auto;
+  }
+  .module > header .title {
+    font-weight: 600;
+    font-size: 14px;
+    flex: 1;
+  }
+  .module > header .crate {
+    color: var(--muted);
+    font-size: 11.5px;
+  }
+  .module > header .toggle {
+    color: var(--muted);
+    font-size: 12px;
+    transition: transform .15s ease;
+  }
+  .module.collapsed > header .toggle { transform: rotate(-90deg); }
+
+  .module .body {
+    padding: 10px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .module.collapsed .body { display: none; }
+  .module .desc {
+    color: var(--muted);
+    font-size: 12.5px;
+    line-height: 1.5;
+  }
+  .module .files {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-top: 4px;
+    border-top: 1px dashed var(--line);
+  }
+  .file {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 4px 6px;
+    border-radius: 4px;
+    font-size: 12.5px;
+  }
+  .file:hover { background: var(--panel-2); }
+  .file .path { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11.5px; color: var(--link); flex: 1; word-break: break-all; }
+  .file .note { color: var(--muted); font-size: 11.5px; font-style: italic; }
+
+  .module[data-cat="loop"]    { border-top: 3px solid var(--c-loop);    }
+  .module[data-cat="tools"]   { border-top: 3px solid var(--c-tools);   }
+  .module[data-cat="perm"]    { border-top: 3px solid var(--c-perm);    }
+  .module[data-cat="sandbox"] { border-top: 3px solid var(--c-sandbox); }
+  .module[data-cat="plugin"]  { border-top: 3px solid var(--c-plugin);  }
+  .module[data-cat="ext"]     { border-top: 3px solid var(--c-ext);     }
+  .module[data-cat="iface"]   { border-top: 3px solid var(--c-iface);   }
+
+  .module[data-cat="loop"]    .dot { background: var(--c-loop);    }
+  .module[data-cat="tools"]   .dot { background: var(--c-tools);   }
+  .module[data-cat="perm"]    .dot { background: var(--c-perm);    }
+  .module[data-cat="sandbox"] .dot { background: var(--c-sandbox); }
+  .module[data-cat="plugin"]  .dot { background: var(--c-plugin);  }
+  .module[data-cat="ext"]     .dot { background: var(--c-ext);     }
+  .module[data-cat="iface"]   .dot { background: var(--c-iface);   }
+
+  .module.dim { opacity: 0.15; pointer-events: none; }
+  .file.hit { background: rgba(126,231,135,0.12); border-left: 2px solid var(--accent); padding-left: 4px; }
+
+  footer {
+    margin-top: 40px;
+    padding: 18px 36px 30px;
+    color: var(--muted);
+    font-size: 12px;
+    border-top: 1px solid var(--line);
+    text-align: center;
+  }
+  footer .pill {
+    display: inline-block;
+    padding: 2px 8px;
+    margin: 0 4px;
+    border-radius: 10px;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    color: var(--text);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+  }
+
+  .lifecycle {
+    margin: 4px 0 18px;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    border-radius: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+  .lifecycle .step {
+    color: var(--text);
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  .lifecycle .arrow { color: var(--muted); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Codex — Module Architecture <span class="badge">codex-rs</span></h1>
+  <p>
+    An interactive map of the Rust workspace that powers <strong>Codex CLI</strong>.
+    Modules are grouped by role; click a card to expand, click a file to open it in your editor via
+    <code>file://</code>.
+    Use the search box to highlight files whose path contains the query.
+  </p>
+  <div class="controls">
+    <input type="search" id="q" placeholder="Filter files… (e.g. sandbox, tool_router, guardian)" />
+    <div class="filter-chips" id="chips">
+      <span class="chip active" data-cat="all">All</span>
+      <span class="chip active" data-cat="loop">Agent loop</span>
+      <span class="chip active" data-cat="tools">Tools</span>
+      <span class="chip active" data-cat="perm">Permissions</span>
+      <span class="chip active" data-cat="sandbox">Sandbox</span>
+      <span class="chip active" data-cat="plugin">Plugins</span>
+      <span class="chip active" data-cat="ext">Extensions</span>
+      <span class="chip active" data-cat="iface">Surfaces / IO</span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <div class="lifecycle" id="lifecycle" title="A single user turn flowing through Codex.">
+    <span class="step">User input</span>
+    <span class="arrow">→</span>
+    <span class="step">CLI / TUI surface</span>
+    <span class="arrow">→</span>
+    <span class="step">Session &amp; tasks</span>
+    <span class="arrow">→</span>
+    <span class="step">Agent loop</span>
+    <span class="arrow">→</span>
+    <span class="step">Tool router</span>
+    <span class="arrow">→</span>
+    <span class="step">Permissions / Guardian</span>
+    <span class="arrow">→</span>
+    <span class="step">Sandbox exec</span>
+    <span class="arrow">→</span>
+    <span class="step">Events → UI / rollout</span>
+  </div>
+
+  <div class="row-banner">Modules</div>
+  <div class="grid" id="grid"></div>
+
+</main>
+
+<footer>
+  Source root: <span class="pill">/home/mihai/workshop/codex/codex-rs</span>
+  · Workspace defined in <a href="file:///home/mihai/workshop/codex/codex-rs/Cargo.toml">Cargo.toml</a>
+  · Top-level overview: <a href="file:///home/mihai/workshop/codex/codex-rs/README.md">README.md</a>
+</footer>
+
+<script>
+  const ROOT = "/home/mihai/workshop/codex/codex-rs";
+
+  const MODULES = [
+    {
+      cat: "loop",
+      title: "Agent loop & sessions",
+      crate: "core/src/session, core/src/tasks",
+      desc: "Drives one conversation turn: builds the prompt, calls the model, streams responses, and dispatches the tools the model requests. The session owns the rollout, turn context, and input queue.",
+      files: [
+        { p: "core/src/session/mod.rs",           n: "session module root" },
+        { p: "core/src/session/session.rs",       n: "Session state" },
+        { p: "core/src/session/turn.rs",          n: "single-turn driver" },
+        { p: "core/src/session/turn_context.rs",  n: "per-turn context" },
+        { p: "core/src/session/handlers.rs",      n: "event handlers" },
+        { p: "core/src/tasks/mod.rs",             n: "task kinds" },
+        { p: "core/src/tasks/regular.rs",         n: "regular agent task" },
+        { p: "core/src/tasks/compact.rs",         n: "history compaction" },
+        { p: "core/src/tasks/lifecycle.rs",       n: "task lifecycle" },
+        { p: "core/src/codex_thread.rs",          n: "thread orchestration" },
+        { p: "core/src/thread_manager.rs",        n: "thread manager" },
+      ],
+    },
+    {
+      cat: "loop",
+      title: "Model client",
+      crate: "core/src/client*, model-provider*",
+      desc: "Talks to OpenAI / Anthropic / Ollama / LM Studio. Handles streaming, retries, and response shape adaptation.",
+      files: [
+        { p: "core/src/client.rs",          n: "main client" },
+        { p: "core/src/client_common.rs",   n: "shared helpers" },
+        { p: "core/src/responses_retry.rs", n: "retry policy" },
+        { p: "model-provider/src/lib.rs",   n: "provider trait" },
+        { p: "model-provider-info/src/lib.rs", n: "provider catalog" },
+        { p: "ollama/src/lib.rs",           n: "Ollama backend" },
+        { p: "lmstudio/src/lib.rs",         n: "LM Studio backend" },
+      ],
+    },
+    {
+      cat: "loop",
+      title: "Agent registry & roles",
+      crate: "core/src/agent",
+      desc: "Multi-agent definitions: roles, resolver, registry. Used to switch personas mid-thread and to launch sub-agents.",
+      files: [
+        { p: "core/src/agent/mod.rs",            n: "module root" },
+        { p: "core/src/agent/registry.rs",       n: "role registry" },
+        { p: "core/src/agent/agent_resolver.rs", n: "resolve a role" },
+        { p: "core/src/agent/role.rs",           n: "Role type" },
+        { p: "core/src/agent/control.rs",        n: "agent control" },
+        { p: "core/src/agent/status.rs",         n: "status reporting" },
+        { p: "core/src/agent/builtins/explorer.toml", n: "built-in: explorer" },
+        { p: "core/src/agent/builtins/awaiter.toml",  n: "built-in: awaiter" },
+      ],
+    },
+    {
+      cat: "loop",
+      title: "Context manager & prompts",
+      crate: "core/src/context, core/src/context_manager",
+      desc: "Builds the prompt: user instructions, environment, available tools/plugins/skills, guardian reminders, permission-state hints. Also handles compaction summaries.",
+      files: [
+        { p: "core/src/context/mod.rs",                     n: "module root" },
+        { p: "core/src/context/user_instructions.rs",       n: "AGENTS.md / CLAUDE.md style" },
+        { p: "core/src/context/environment_context.rs",     n: "OS / cwd / shell info" },
+        { p: "core/src/context/permissions_instructions.rs",n: "permission-state injection" },
+        { p: "core/src/context/plugin_instructions.rs",     n: "active plugins" },
+        { p: "core/src/context/available_plugins_instructions.rs", n: "installable plugins" },
+        { p: "core/src/context/available_skills_instructions.rs",  n: "active skills" },
+        { p: "core/src/context/goal_context.rs",            n: "goal/steering context" },
+        { p: "core/src/compact.rs",                         n: "history compaction" },
+        { p: "core/src/compact_remote.rs",                  n: "remote summary" },
+      ],
+    },
+    {
+      cat: "tools",
+      title: "Tool specs (catalog)",
+      crate: "tools",
+      desc: "The vocabulary the model is told about: function calls, the apply-patch tool, MCP tools, the dynamic tool, image detail, JSON-schema helpers. Pure declarations — no execution here.",
+      files: [
+        { p: "tools/src/lib.rs",              n: "crate root" },
+        { p: "tools/src/tool_spec.rs",        n: "ToolSpec" },
+        { p: "tools/src/tool_definition.rs",  n: "tool definition" },
+        { p: "tools/src/tool_config.rs",      n: "config wiring" },
+        { p: "tools/src/tool_discovery.rs",   n: "discovery rules" },
+        { p: "tools/src/tool_executor.rs",    n: "executor trait" },
+        { p: "tools/src/mcp_tool.rs",         n: "MCP-backed tool" },
+        { p: "tools/src/dynamic_tool.rs",     n: "dynamic tool (defer-load)" },
+        { p: "tools/src/code_mode.rs",        n: "code-mode tool" },
+        { p: "tools/src/responses_api.rs",    n: "OpenAI responses shape" },
+      ],
+    },
+    {
+      cat: "tools",
+      title: "Tool router & registry",
+      crate: "core/src/tools",
+      desc: "Where the agent loop calls into. Resolves the tool name from the model output, dispatches to a handler, tracks parallel calls, threads events back out.",
+      files: [
+        { p: "core/src/tools/mod.rs",          n: "module root" },
+        { p: "core/src/tools/router.rs",       n: "dispatch by name" },
+        { p: "core/src/tools/registry.rs",     n: "registry of handlers" },
+        { p: "core/src/tools/orchestrator.rs", n: "orchestration glue" },
+        { p: "core/src/tools/lifecycle.rs",    n: "call lifecycle" },
+        { p: "core/src/tools/parallel.rs",     n: "parallel calls" },
+        { p: "core/src/tools/events.rs",       n: "ToolCall events" },
+        { p: "core/src/tools/context.rs",      n: "per-call context" },
+        { p: "core/src/tools/sandboxing.rs",   n: "sandbox glue" },
+        { p: "core/src/tools/spec_plan.rs",    n: "specs per turn" },
+      ],
+    },
+    {
+      cat: "tools",
+      title: "Tool handlers (built-in)",
+      crate: "core/src/tools/handlers",
+      desc: "Concrete handlers for each built-in tool the model can call: apply_patch, shell/unified-exec, plan, MCP resource, multi-agents, request-permissions, request-plugin-install.",
+      files: [
+        { p: "core/src/tools/handlers/mod.rs",                     n: "handler routing" },
+        { p: "core/src/tools/handlers/apply_patch.rs",             n: "apply_patch" },
+        { p: "core/src/tools/handlers/agent_jobs.rs",              n: "spawn sub-agent" },
+        { p: "core/src/tools/handlers/dynamic.rs",                 n: "dynamic tool" },
+        { p: "core/src/tools/handlers/extension_tools.rs",         n: "extension contributions" },
+        { p: "core/src/tools/handlers/goal.rs",                    n: "goal tool" },
+        { p: "core/src/tools/handlers/mcp.rs",                     n: "MCP forwarding" },
+        { p: "core/src/tools/handlers/mcp_resource.rs",            n: "MCP resources" },
+        { p: "core/src/tools/handlers/multi_agents.rs",            n: "multi-agent dispatch" },
+        { p: "core/src/tools/handlers/multi_agents_v2.rs",         n: "multi-agent v2" },
+        { p: "core/src/tools/handlers/plan.rs",                    n: "plan tool" },
+        { p: "core/src/tools/handlers/request_permissions.rs",     n: "ask user for perms" },
+        { p: "core/src/tools/handlers/request_plugin_install.rs",  n: "ask user to install plugin" },
+      ],
+    },
+    {
+      cat: "tools",
+      title: "Exec runtimes",
+      crate: "core/src/tools/runtimes",
+      desc: "How shell-style tools actually run: apply_patch directly, shell via a spawned process, or unified_exec for long-running ones.",
+      files: [
+        { p: "core/src/tools/runtimes/mod.rs",          n: "runtime trait" },
+        { p: "core/src/tools/runtimes/apply_patch.rs",  n: "apply-patch runtime" },
+        { p: "core/src/tools/runtimes/shell.rs",        n: "shell runtime" },
+        { p: "core/src/tools/runtimes/unified_exec.rs", n: "unified exec" },
+        { p: "core/src/exec.rs",                        n: "exec primitive" },
+        { p: "core/src/spawn.rs",                       n: "process spawn" },
+        { p: "core/src/shell.rs",                       n: "shell choice" },
+        { p: "core/src/unified_exec",                   n: "(directory)" },
+      ],
+    },
+    {
+      cat: "tools",
+      title: "apply-patch",
+      crate: "apply-patch",
+      desc: "Standalone parser + applier for the V4A patch grammar used by the model to edit files.",
+      files: [
+        { p: "apply-patch/src/lib.rs",              n: "crate root" },
+        { p: "apply-patch/src/parser.rs",           n: "patch parser" },
+        { p: "apply-patch/src/streaming_parser.rs", n: "streaming parser" },
+        { p: "apply-patch/src/invocation.rs",       n: "invocation" },
+        { p: "apply-patch/src/seek_sequence.rs",    n: "matcher" },
+        { p: "apply-patch/src/main.rs",             n: "CLI shim" },
+      ],
+    },
+    {
+      cat: "perm",
+      title: "Approval flow & safety",
+      crate: "core/src (safety.rs, exec_policy.rs, …)",
+      desc: "The pre-flight check before any tool actually runs: is this command on the policy allowlist, does it need an approval, is the destination writable, does the network rule apply?",
+      files: [
+        { p: "core/src/safety.rs",                      n: "is-this-allowed?" },
+        { p: "core/src/exec_policy.rs",                 n: "command exec policy" },
+        { p: "core/src/command_canonicalization.rs",    n: "canonicalize cmds" },
+        { p: "core/src/tools/network_approval.rs",      n: "network approval gate" },
+        { p: "config/src/permissions_toml.rs",          n: "config schema" },
+        { p: "core/src/context/permissions_instructions.rs", n: "prompt injection" },
+        { p: "core/src/context/network_rule_saved.rs",  n: "saved network rules" },
+        { p: "core/src/context/approved_command_prefix_saved.rs", n: "saved cmd prefixes" },
+      ],
+    },
+    {
+      cat: "perm",
+      title: "Guardian (review)",
+      crate: "core/src/guardian, ext/guardian",
+      desc: "Second-opinion reviewer that watches the agent's actions, blocks risky ones, and surfaces an explanation. Has its own prompt/policy template.",
+      files: [
+        { p: "core/src/guardian/mod.rs",            n: "module root" },
+        { p: "core/src/guardian/policy.md",         n: "policy (markdown)" },
+        { p: "core/src/guardian/policy_template.md",n: "policy template" },
+        { p: "core/src/guardian/prompt.rs",         n: "guardian prompt" },
+        { p: "core/src/guardian/review.rs",         n: "single review" },
+        { p: "core/src/guardian/review_session.rs", n: "review session" },
+        { p: "core/src/guardian/approval_request.rs", n: "request to user" },
+        { p: "ext/guardian/src/lib.rs",             n: "guardian extension" },
+      ],
+    },
+    {
+      cat: "perm",
+      title: "Shell escalation",
+      crate: "shell-escalation",
+      desc: "Helper used when a sandboxed command needs to escalate (sudo / askpass) without breaking the agent loop.",
+      files: [
+        { p: "shell-escalation/src/lib.rs", n: "crate root" },
+        { p: "shell-escalation/src/bin",   n: "(bin directory)" },
+        { p: "shell-escalation/src/unix",  n: "(unix-specific helpers)" },
+      ],
+    },
+    {
+      cat: "sandbox",
+      title: "Sandbox manager (cross-platform)",
+      crate: "sandboxing",
+      desc: "Picks and configures the right sandbox per OS — Seatbelt (macOS), Landlock+bwrap (Linux), Windows restricted token. Holds the .sbpl policies.",
+      files: [
+        { p: "sandboxing/src/lib.rs",                 n: "crate root" },
+        { p: "sandboxing/src/manager.rs",             n: "platform manager" },
+        { p: "sandboxing/src/policy_transforms.rs",   n: "policy transforms" },
+        { p: "sandboxing/src/seatbelt.rs",            n: "macOS seatbelt" },
+        { p: "sandboxing/src/seatbelt_base_policy.sbpl",    n: "base SBPL policy" },
+        { p: "sandboxing/src/seatbelt_network_policy.sbpl", n: "network SBPL" },
+        { p: "sandboxing/src/restricted_read_only_platform_defaults.sbpl", n: "read-only defaults" },
+        { p: "sandboxing/src/landlock.rs",            n: "linux landlock" },
+        { p: "sandboxing/src/bwrap.rs",               n: "linux bwrap wrapper" },
+      ],
+    },
+    {
+      cat: "sandbox",
+      title: "Linux sandbox (bwrap + landlock)",
+      crate: "linux-sandbox, bwrap",
+      desc: "The Linux execution sandbox. Spawns bubblewrap with a tight mount namespace, layers landlock filesystem restrictions on top, and routes outgoing network through a proxy when needed.",
+      files: [
+        { p: "linux-sandbox/src/lib.rs",          n: "crate root" },
+        { p: "linux-sandbox/src/launcher.rs",     n: "launcher" },
+        { p: "linux-sandbox/src/linux_run_main.rs", n: "main entry" },
+        { p: "linux-sandbox/src/bwrap.rs",        n: "bwrap invocation" },
+        { p: "linux-sandbox/src/bundled_bwrap.rs",n: "bundled binary" },
+        { p: "linux-sandbox/src/bazel_bwrap.rs",  n: "bazel build path" },
+        { p: "linux-sandbox/src/landlock.rs",     n: "landlock rules" },
+        { p: "linux-sandbox/src/proxy_routing.rs",n: "network proxy routing" },
+        { p: "linux-sandbox/src/exec_util.rs",    n: "exec helpers" },
+        { p: "bwrap/src/main.rs",                 n: "bwrap shim binary" },
+      ],
+    },
+    {
+      cat: "sandbox",
+      title: "Windows sandbox",
+      crate: "windows-sandbox-rs",
+      desc: "Windows path: restricted tokens, deny ACLs, WFP for network, a hidden desktop, and capability mappings. Large surface — these are the most central files.",
+      files: [
+        { p: "windows-sandbox-rs/src/lib.rs",            n: "crate root" },
+        { p: "windows-sandbox-rs/src/setup.rs",          n: "sandbox setup" },
+        { p: "windows-sandbox-rs/src/policy.rs",         n: "policy model" },
+        { p: "windows-sandbox-rs/src/token.rs",          n: "restricted token" },
+        { p: "windows-sandbox-rs/src/acl.rs",            n: "ACLs" },
+        { p: "windows-sandbox-rs/src/deny_read_acl.rs",  n: "deny-read ACL" },
+        { p: "windows-sandbox-rs/src/wfp.rs",            n: "Windows Filtering Platform" },
+        { p: "windows-sandbox-rs/src/wfp_setup.rs",      n: "WFP setup" },
+        { p: "windows-sandbox-rs/src/desktop.rs",        n: "hidden desktop" },
+        { p: "windows-sandbox-rs/src/process.rs",        n: "process spawn" },
+        { p: "windows-sandbox-rs/src/spawn_prep.rs",     n: "spawn prep" },
+        { p: "windows-sandbox-rs/src/workspace_acl.rs",  n: "workspace ACL" },
+      ],
+    },
+    {
+      cat: "sandbox",
+      title: "Process hardening",
+      crate: "process-hardening",
+      desc: "Cross-cutting hardening applied to any spawned helper: rlimits, file descriptor hygiene, signal masks.",
+      files: [
+        { p: "process-hardening/src/lib.rs", n: "crate root" },
+      ],
+    },
+    {
+      cat: "sandbox",
+      title: "Sandbox glue in core",
+      crate: "core/src",
+      desc: "Where the core agent loop chooses a sandbox profile per call, tags the rollout, and surfaces failures back to the model.",
+      files: [
+        { p: "core/src/sandboxing/mod.rs",     n: "core/sandboxing glue" },
+        { p: "core/src/sandbox_tags.rs",       n: "sandbox tagging" },
+        { p: "core/src/landlock.rs",           n: "landlock glue" },
+        { p: "core/src/windows_sandbox.rs",    n: "windows glue" },
+        { p: "core/src/windows_sandbox_read_grants.rs", n: "windows read grants" },
+        { p: "core/src/tools/sandboxing.rs",   n: "per-tool sandbox config" },
+      ],
+    },
+    {
+      cat: "plugin",
+      title: "Plugin core (id, manifest, loader)",
+      crate: "plugin, core-plugins",
+      desc: "The plugin format itself — id, manifest, install/remove, marketplace sync. A plugin can contribute commands, agents, skills, hooks, and MCP servers.",
+      files: [
+        { p: "plugin/src/lib.rs",            n: "plugin crate root" },
+        { p: "plugin/src/plugin_id.rs",      n: "plugin id" },
+        { p: "plugin/src/load_outcome.rs",   n: "load result" },
+        { p: "core-plugins/src/lib.rs",      n: "manager crate root" },
+        { p: "core-plugins/src/manifest.rs", n: "manifest schema" },
+        { p: "core-plugins/src/loader.rs",   n: "loader" },
+        { p: "core-plugins/src/manager.rs",  n: "lifecycle manager" },
+        { p: "core-plugins/src/store.rs",    n: "installed store" },
+        { p: "core-plugins/src/toggles.rs",  n: "enable/disable" },
+      ],
+    },
+    {
+      cat: "plugin",
+      title: "Plugin marketplace",
+      crate: "core-plugins",
+      desc: "Discovery + remote sync for plugins: how a marketplace add or startup remote sync fetches and verifies plugin bundles.",
+      files: [
+        { p: "core-plugins/src/marketplace.rs",         n: "marketplace core" },
+        { p: "core-plugins/src/marketplace_add.rs",     n: "add command" },
+        { p: "core-plugins/src/marketplace_remove.rs",  n: "remove command" },
+        { p: "core-plugins/src/marketplace_upgrade.rs", n: "upgrade command" },
+        { p: "core-plugins/src/installed_marketplaces.rs", n: "installed list" },
+        { p: "core-plugins/src/remote.rs",              n: "remote fetch" },
+        { p: "core-plugins/src/remote_bundle.rs",       n: "bundle handling" },
+        { p: "core-plugins/src/remote_legacy.rs",       n: "legacy remote" },
+        { p: "core-plugins/src/startup_remote_sync.rs", n: "startup sync" },
+        { p: "core-plugins/src/plugin_bundle_archive.rs", n: "bundle archive" },
+      ],
+    },
+    {
+      cat: "plugin",
+      title: "Skills",
+      crate: "skills, core-skills",
+      desc: "Skills are a lighter-weight contribution than plugins: declarative units that get surfaced to the model alongside tools. The system handles loading, mention-based invocation, and prompt injection.",
+      files: [
+        { p: "skills/src/lib.rs",               n: "skills (assets)" },
+        { p: "core-skills/src/lib.rs",          n: "core-skills root" },
+        { p: "core-skills/src/loader.rs",       n: "loader" },
+        { p: "core-skills/src/manager.rs",      n: "manager" },
+        { p: "core-skills/src/injection.rs",    n: "prompt injection" },
+        { p: "core-skills/src/invocation_utils.rs", n: "invocation utils" },
+        { p: "core-skills/src/model.rs",        n: "model" },
+        { p: "core-skills/src/render.rs",       n: "rendering" },
+        { p: "core-skills/src/system.rs",       n: "system skills" },
+        { p: "core-skills/src/remote.rs",       n: "remote skills" },
+      ],
+    },
+    {
+      cat: "plugin",
+      title: "Hooks",
+      crate: "hooks",
+      desc: "User-defined automation that fires on events (PreToolUse, PostToolUse, Stop, …). The registry, schema, and the engine that executes hook commands.",
+      files: [
+        { p: "hooks/src/lib.rs",          n: "crate root" },
+        { p: "hooks/src/registry.rs",     n: "registry" },
+        { p: "hooks/src/schema.rs",       n: "hook schema" },
+        { p: "hooks/src/types.rs",        n: "types" },
+        { p: "hooks/src/declarations.rs", n: "declarations" },
+        { p: "hooks/src/config_rules.rs", n: "config rules" },
+        { p: "hooks/src/engine",          n: "(engine directory)" },
+        { p: "hooks/src/events",          n: "(events directory)" },
+        { p: "hooks/src/output_spill.rs", n: "output spill" },
+        { p: "hooks/src/legacy_notify.rs",n: "legacy notify" },
+        { p: "core/src/hook_runtime.rs",  n: "core-side runtime" },
+      ],
+    },
+    {
+      cat: "plugin",
+      title: "MCP integration",
+      crate: "codex-mcp, mcp-server, rmcp-client",
+      desc: "Codex is both an MCP client (consumes external tool servers) and an MCP server (lets other agents drive it). Plugins commonly contribute MCP servers, so this sits alongside plugin loading.",
+      files: [
+        { p: "codex-mcp/src/lib.rs",            n: "MCP crate root" },
+        { p: "codex-mcp/src/server.rs",         n: "MCP server" },
+        { p: "codex-mcp/src/runtime.rs",        n: "MCP runtime" },
+        { p: "codex-mcp/src/connection_manager.rs", n: "connection manager" },
+        { p: "codex-mcp/src/tools.rs",          n: "tools bridge" },
+        { p: "codex-mcp/src/elicitation.rs",    n: "elicitation" },
+        { p: "codex-mcp/src/rmcp_client.rs",    n: "remote MCP client" },
+        { p: "mcp-server/src",                  n: "(mcp-server crate)" },
+        { p: "rmcp-client/src",                 n: "(rmcp-client crate)" },
+        { p: "core/src/mcp.rs",                 n: "core-side MCP" },
+      ],
+    },
+    {
+      cat: "ext",
+      title: "Extension API",
+      crate: "ext/extension-api",
+      desc: "Internal extension surface used by goal / guardian / memories. Defines capabilities, contributors, and the registry that wires them into the loop.",
+      files: [
+        { p: "ext/extension-api/src/lib.rs",      n: "crate root" },
+        { p: "ext/extension-api/src/registry.rs", n: "registry" },
+        { p: "ext/extension-api/src/state.rs",    n: "state" },
+        { p: "ext/extension-api/src/capabilities", n: "(capabilities/)" },
+        { p: "ext/extension-api/src/contributors.rs", n: "contributors" },
+        { p: "ext/extension-api/src/contributors", n: "(contributors/)" },
+      ],
+    },
+    {
+      cat: "ext",
+      title: "Goal extension",
+      crate: "ext/goal",
+      desc: "Tracks a per-conversation goal: a tool for setting it, runtime steering hooks, and accounting of progress.",
+      files: [
+        { p: "ext/goal/src/lib.rs",        n: "crate root" },
+        { p: "ext/goal/src/extension.rs",  n: "extension wiring" },
+        { p: "ext/goal/src/runtime.rs",    n: "runtime" },
+        { p: "ext/goal/src/steering.rs",   n: "steering" },
+        { p: "ext/goal/src/spec.rs",       n: "spec" },
+        { p: "ext/goal/src/tool.rs",       n: "goal tool" },
+        { p: "ext/goal/src/accounting.rs", n: "accounting" },
+        { p: "ext/goal/src/events.rs",     n: "events" },
+      ],
+    },
+    {
+      cat: "ext",
+      title: "Memories extension",
+      crate: "ext/memories, memories/{read,write}",
+      desc: "Persistent agent memory. The extension exposes tools, the read crate fetches & cites, the write crate runs the two-phase write/guard pipeline.",
+      files: [
+        { p: "ext/memories/src/lib.rs",       n: "crate root" },
+        { p: "ext/memories/src/extension.rs", n: "extension wiring" },
+        { p: "ext/memories/src/backend.rs",   n: "backend trait" },
+        { p: "ext/memories/src/schema.rs",    n: "schema" },
+        { p: "ext/memories/src/prompts.rs",   n: "prompt fragments" },
+        { p: "ext/memories/src/tools",        n: "(tools dir)" },
+        { p: "memories/read/src/lib.rs",      n: "read root" },
+        { p: "memories/read/src/citations.rs",n: "citations" },
+        { p: "memories/read/src/metrics.rs",  n: "metrics" },
+        { p: "memories/write/src/lib.rs",     n: "write root" },
+        { p: "memories/write/src/phase1.rs",  n: "phase 1 (propose)" },
+        { p: "memories/write/src/phase2.rs",  n: "phase 2 (commit)" },
+        { p: "memories/write/src/guard.rs",   n: "guard" },
+        { p: "memories/write/src/storage.rs", n: "storage" },
+        { p: "memories/write/src/workspace.rs",n: "workspace" },
+      ],
+    },
+    {
+      cat: "iface",
+      title: "CLI multitool",
+      crate: "cli",
+      desc: "Entry binary. Dispatches to tui, exec, mcp, sandbox, doctor, plugin/marketplace subcommands.",
+      files: [
+        { p: "cli/src/main.rs",            n: "binary entry" },
+        { p: "cli/src/lib.rs",             n: "shared cli" },
+        { p: "cli/src/app_cmd.rs",         n: "app command" },
+        { p: "cli/src/debug_sandbox.rs",   n: "sandbox subcmd" },
+        { p: "cli/src/doctor.rs",          n: "doctor" },
+        { p: "cli/src/login.rs",           n: "login" },
+        { p: "cli/src/marketplace_cmd.rs", n: "marketplace cmd" },
+        { p: "cli/src/mcp_cmd.rs",         n: "mcp cmd" },
+        { p: "cli/src/plugin_cmd.rs",      n: "plugin cmd" },
+      ],
+    },
+    {
+      cat: "iface",
+      title: "TUI (Ratatui)",
+      crate: "tui",
+      desc: "The interactive fullscreen UI. App loop, chat widget, history cells, approval prompts, keymap, onboarding.",
+      files: [
+        { p: "tui/src/main.rs",        n: "binary entry" },
+        { p: "tui/src/lib.rs",         n: "lib root" },
+        { p: "tui/src/app.rs",         n: "app loop" },
+        { p: "tui/src/chatwidget.rs",  n: "chat widget" },
+        { p: "tui/src/keymap.rs",      n: "keymap" },
+        { p: "tui/src/approval_events.rs", n: "approval prompts" },
+        { p: "tui/src/diff_render.rs", n: "diff renderer" },
+        { p: "tui/src/markdown_render.rs", n: "markdown render" },
+        { p: "tui/src/hooks_rpc.rs",   n: "hooks RPC" },
+      ],
+    },
+    {
+      cat: "iface",
+      title: "Headless exec",
+      crate: "exec",
+      desc: "Non-interactive runner — used in scripts and CI. Streams events in human or JSONL form.",
+      files: [
+        { p: "exec/src/main.rs",                              n: "binary entry" },
+        { p: "exec/src/lib.rs",                               n: "lib" },
+        { p: "exec/src/cli.rs",                               n: "cli args" },
+        { p: "exec/src/event_processor.rs",                   n: "event processor" },
+        { p: "exec/src/event_processor_with_human_output.rs", n: "human output" },
+        { p: "exec/src/event_processor_with_jsonl_output.rs", n: "JSONL output" },
+        { p: "exec/src/exec_events.rs",                       n: "event shape" },
+      ],
+    },
+    {
+      cat: "iface",
+      title: "Protocol & rollout",
+      crate: "protocol, rollout, rollout-trace",
+      desc: "On-the-wire types shared across the CLI surfaces, plus the rollout that persists each turn so a thread can be replayed or migrated.",
+      files: [
+        { p: "protocol/src",          n: "(protocol/ crate)" },
+        { p: "rollout/src",           n: "(rollout/ crate)" },
+        { p: "rollout-trace/src",     n: "(rollout-trace/ crate)" },
+        { p: "core/src/rollout.rs",   n: "core-side rollout" },
+        { p: "core/src/protocol.rs",  n: "core-side protocol" },
+      ],
+    },
+    {
+      cat: "iface",
+      title: "Config",
+      crate: "config",
+      desc: "Loading & validating config.toml, the permission TOML, MCP TOML, plugin/marketplace TOML, profile TOML. The single source of truth for what a session looks like before it starts.",
+      files: [
+        { p: "config/src/lib.rs",              n: "crate root" },
+        { p: "config/src/loader",              n: "(loader/)" },
+        { p: "config/src/config_toml.rs",      n: "main config schema" },
+        { p: "config/src/permissions_toml.rs", n: "permissions schema" },
+        { p: "config/src/plugin_edit.rs",      n: "plugin editing" },
+        { p: "config/src/marketplace_edit.rs", n: "marketplace editing" },
+        { p: "config/src/mcp_edit.rs",         n: "mcp editing" },
+        { p: "config/src/profile_toml.rs",     n: "profile schema" },
+        { p: "config/src/skills_config.rs",    n: "skills config" },
+        { p: "config/src/strict_config.rs",    n: "strict validation" },
+      ],
+    },
+  ];
+
+  const ALL_CATS = ["loop","tools","perm","sandbox","plugin","ext","iface"];
+  const activeCats = new Set(ALL_CATS);
+
+  function el(tag, props, children) {
+    const node = document.createElement(tag);
+    if (props) {
+      for (const [k, v] of Object.entries(props)) {
+        if (k === "class") node.className = v;
+        else if (k === "dataset") {
+          for (const [dk, dv] of Object.entries(v)) node.dataset[dk] = dv;
+        } else if (k === "on") {
+          for (const [ev, fn] of Object.entries(v)) node.addEventListener(ev, fn);
+        } else if (k === "href" || k === "title" || k === "id") {
+          node.setAttribute(k, v);
+        } else {
+          node[k] = v;
+        }
+      }
+    }
+    if (children) {
+      for (const c of children) {
+        if (c == null) continue;
+        node.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
+      }
+    }
+    return node;
+  }
+
+  function fileUrl(rel) {
+    return "file://" + ROOT + "/" + rel;
+  }
+
+  function renderModule(m) {
+    const headerEl = el("header", {
+      on: { click: (e) => {
+        if (e.target.tagName === "A") return;
+        article.classList.toggle("collapsed");
+      } }
+    }, [
+      el("span", { class: "dot" }),
+      el("span", { class: "title", textContent: m.title }),
+      el("span", { class: "crate", textContent: m.crate }),
+      el("span", { class: "toggle", textContent: "▾" }),
+    ]);
+
+    const fileEls = m.files.map(f => {
+      const row = el("div", {
+        class: "file",
+        dataset: { path: m.crate + "/" + f.p, note: (f.n || "").toLowerCase() }
+      }, [
+        el("a", { class: "path", href: fileUrl(f.p), textContent: f.p }),
+        f.n ? el("span", { class: "note", textContent: "— " + f.n }) : null,
+      ]);
+      return row;
+    });
+
+    const bodyEl = el("div", { class: "body" }, [
+      el("div", { class: "desc", textContent: m.desc }),
+      el("div", { class: "files" }, fileEls),
+    ]);
+
+    const article = el("article", {
+      class: "module",
+      dataset: { cat: m.cat, title: m.title.toLowerCase(), desc: m.desc.toLowerCase() }
+    }, [headerEl, bodyEl]);
+
+    return article;
+  }
+
+  const grid = document.getElementById("grid");
+  for (const m of MODULES) grid.appendChild(renderModule(m));
+
+  const chips = document.getElementById("chips");
+  function applyCatFilter() {
+    for (const m of document.querySelectorAll(".module")) {
+      const cat = m.dataset.cat;
+      m.classList.toggle("dim", !activeCats.has(cat));
+    }
+  }
+
+  chips.addEventListener("click", (e) => {
+    const t = e.target;
+    if (!t.classList.contains("chip")) return;
+    const cat = t.dataset.cat;
+    const allChip = chips.querySelector('[data-cat="all"]');
+
+    if (cat === "all") {
+      const turningOn = !t.classList.contains("active");
+      t.classList.toggle("active", turningOn);
+      for (const c of chips.querySelectorAll(".chip")) {
+        if (c.dataset.cat === "all") continue;
+        c.classList.toggle("active", turningOn);
+      }
+      activeCats.clear();
+      if (turningOn) for (const c of ALL_CATS) activeCats.add(c);
+    } else {
+      t.classList.toggle("active");
+      if (t.classList.contains("active")) activeCats.add(cat);
+      else activeCats.delete(cat);
+      allChip.classList.toggle("active", activeCats.size === ALL_CATS.length);
+    }
+    applyCatFilter();
+  });
+
+  const q = document.getElementById("q");
+  q.addEventListener("input", () => {
+    const term = q.value.trim().toLowerCase();
+    for (const m of document.querySelectorAll(".module")) {
+      let hitInModule = false;
+      for (const f of m.querySelectorAll(".file")) {
+        const path = f.dataset.path || "";
+        const note = f.dataset.note || "";
+        const match = term && (path.includes(term) || note.includes(term));
+        f.classList.toggle("hit", match);
+        if (match) hitInModule = true;
+      }
+      if (term) {
+        const titleHit = (m.dataset.title || "").includes(term);
+        const descHit  = (m.dataset.desc || "").includes(term);
+        const moduleMatch = hitInModule || titleHit || descHit;
+        m.classList.toggle("dim", !moduleMatch || !activeCats.has(m.dataset.cat));
+      } else {
+        m.classList.toggle("dim", !activeCats.has(m.dataset.cat));
+      }
+    }
+  });
+</script>
+</body>
+</html>

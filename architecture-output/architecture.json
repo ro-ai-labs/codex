@@ -1,0 +1,6069 @@
+{
+  "schema_version": "1",
+  "generated_at": "2026-05-26T13:15:09.624179+00:00",
+  "project": {
+    "name": "openai/codex",
+    "tagline": "Codex CLI: OpenAI's local coding agent.",
+    "kind": "monorepo",
+    "workspaces": {
+      "rust": "codex-rs/ (Cargo workspace, 112 crates, ~737k LoC, 1,642 source files)",
+      "node": "pnpm workspace (codex-cli, codex-rs/responses-api-proxy/npm, sdk/typescript)",
+      "python": "sdk/python (pyproject)"
+    },
+    "build_tools": [
+      "cargo",
+      "bazel",
+      "pnpm",
+      "just",
+      "nix (flake)"
+    ],
+    "primary_languages": [
+      "Rust",
+      "TypeScript",
+      "Python",
+      "JavaScript"
+    ],
+    "license": "Apache-2.0",
+    "key_docs": [
+      "README.md",
+      "AGENTS.md",
+      "docs/contributing.md",
+      "docs/install.md",
+      "docs/config.md",
+      "docs/sandbox.md",
+      "docs/execpolicy.md",
+      "docs/skills.md",
+      "codex-rs/config.md"
+    ]
+  },
+  "entry_points": [
+    {
+      "name": "codex",
+      "binary": "codex-rs/cli/src/main.rs",
+      "crate": "codex-cli",
+      "role": "Primary CLI; dispatches subcommands (login, mcp, plugin, doctor, app, marketplace) and delegates interactive sessions to codex-tui, headless runs to codex-exec.",
+      "downstream": [
+        "codex-tui",
+        "codex-exec",
+        "codex-app-server-daemon",
+        "codex-mcp-server",
+        "codex-responses-api-proxy",
+        "codex-state",
+        "codex-config",
+        "codex-login",
+        "codex-core"
+      ]
+    },
+    {
+      "name": "codex-tui",
+      "binary": "codex-rs/tui/src/main.rs",
+      "crate": "codex-tui",
+      "role": "Interactive ratatui TUI. The main attended-coding experience.",
+      "downstream": [
+        "codex-core",
+        "codex-config",
+        "codex-tools",
+        "codex-state"
+      ]
+    },
+    {
+      "name": "codex-exec / codex-linux-sandbox",
+      "binary": "codex-rs/exec/src/main.rs",
+      "crate": "codex-exec",
+      "role": "Non-interactive agent run. Same binary also acts as codex-linux-sandbox when invoked under that argv[0] (arg0 multicall).",
+      "downstream": [
+        "codex-core",
+        "codex-linux-sandbox",
+        "codex-execpolicy"
+      ]
+    },
+    {
+      "name": "codex-mcp-server",
+      "binary": "codex-rs/mcp-server/src/main.rs",
+      "crate": "codex-mcp-server",
+      "role": "Exposes Codex as an MCP server so other agents can call Codex tools.",
+      "downstream": [
+        "codex-mcp",
+        "codex-core"
+      ]
+    },
+    {
+      "name": "codex-app-server",
+      "binary": "codex-rs/app-server/src/main.rs",
+      "crate": "codex-app-server",
+      "role": "Long-running daemon that VS Code, Cursor, Windsurf, and the desktop app connect to.",
+      "downstream": [
+        "codex-app-server-transport",
+        "codex-app-server-protocol",
+        "codex-core",
+        "codex-config",
+        "codex-plugin"
+      ]
+    },
+    {
+      "name": "codex-responses-api-proxy",
+      "binary": "codex-rs/responses-api-proxy/src/main.rs",
+      "crate": "codex-responses-api-proxy",
+      "role": "HTTP proxy in front of OpenAI Responses API. Runs process hardening pre-main.",
+      "downstream": [
+        "codex-process-hardening"
+      ]
+    },
+    {
+      "name": "sdk/typescript",
+      "binary": "sdk/typescript/src/",
+      "crate": "npm:sdk-typescript",
+      "role": "External clients embed Codex by talking to codex-app-server over its protocol.",
+      "downstream": [
+        "codex-app-server-protocol"
+      ]
+    },
+    {
+      "name": "sdk/python",
+      "binary": "sdk/python/src/",
+      "crate": "py:sdk-python",
+      "role": "Python equivalent of the TS SDK. Includes a runtime-companion package.",
+      "downstream": [
+        "codex-app-server-protocol"
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "name": "Presentation (CLI/TUI)",
+      "color": "#f97316",
+      "purpose": "User-facing interfaces. codex (combined CLI), codex-tui (ratatui TUI), codex-exec (headless), codex-exec-server. Where every user invocation begins.",
+      "components": [
+        "codex-cli",
+        "codex-exec",
+        "codex-exec-server",
+        "codex-tui",
+        "npm:codex-cli"
+      ],
+      "size": 5
+    },
+    {
+      "name": "App Server (IPC)",
+      "color": "#fb923c",
+      "purpose": "Long-lived daemon that IDEs and apps talk to over stdio/websocket/Unix socket. Speaks the codex-app-server-protocol JSON RPC shape.",
+      "components": [
+        "codex-app-server",
+        "codex-app-server-transport",
+        "codex-app-server-daemon",
+        "codex-app-server-client",
+        "codex-app-server-protocol",
+        "codex-app-server-test-client",
+        "codex-debug-client",
+        "npm:sdk-typescript",
+        "py:sdk-python"
+      ],
+      "size": 9
+    },
+    {
+      "name": "MCP Protocol",
+      "color": "#eab308",
+      "purpose": "Model Context Protocol surface. codex-mcp-server exposes codex as an MCP tool; codex-rmcp-client, codex-mcp, codex-stdio-to-uds, codex-uds are clients/transports.",
+      "components": [
+        "codex-mcp",
+        "codex-mcp-server",
+        "codex-rmcp-client",
+        "codex-stdio-to-uds",
+        "codex-uds"
+      ],
+      "size": 5
+    },
+    {
+      "name": "Extensions",
+      "color": "#84cc16",
+      "purpose": "First-party extension crates loaded into core via codex-extension-api: goal, guardian, memories. Each has read/write sub-crates for state isolation.",
+      "components": [
+        "codex-extension-api",
+        "codex-goal-extension",
+        "codex-guardian",
+        "codex-memories-extension",
+        "codex-memories-read",
+        "codex-memories-write"
+      ],
+      "size": 6
+    },
+    {
+      "name": "Plugins / Skills / Hooks",
+      "color": "#22c55e",
+      "purpose": "User-extensible behavior. Plugin runtime, skill catalog, lifecycle hooks. codex-core-plugins is the in-process plugin host; codex-hooks is the user-script integration.",
+      "components": [
+        "codex-skills",
+        "codex-core-plugins",
+        "codex-core-skills",
+        "codex-hooks",
+        "codex-utils-plugins",
+        "codex-plugin"
+      ],
+      "size": 6
+    },
+    {
+      "name": "Core Orchestration",
+      "color": "#06b6d4",
+      "purpose": "The agent loop. codex-core owns the conversation, tool calls, compaction, rollouts. codex-protocol is the wire types; codex-state & codex-thread-store persist sessions; codex-tools registers built-in tools.",
+      "components": [
+        "codex-feedback",
+        "codex-features",
+        "codex-install-context",
+        "codex-code-mode",
+        "codex-collaboration-mode-templates",
+        "codex-core",
+        "codex-core-api",
+        "codex-protocol",
+        "codex-rollout",
+        "codex-rollout-trace",
+        "codex-response-debug-context",
+        "codex-tools",
+        "codex-state",
+        "codex-thread-manager-sample",
+        "codex-thread-store",
+        "codex-experimental-api-macros"
+      ],
+      "size": 16
+    },
+    {
+      "name": "Model Providers & Auth",
+      "color": "#3b82f6",
+      "purpose": "Talking to LLMs. Native ChatGPT/OpenAI client, Ollama, LMStudio, AWS Bedrock auth. codex-login handles ChatGPT/API-key/device-code sign-in; secrets/keyring back the credentials.",
+      "components": [
+        "codex-aws-auth",
+        "codex-backend-client",
+        "codex-backend-openapi-models",
+        "codex-connectors",
+        "codex-secrets",
+        "codex-keyring-store",
+        "codex-lmstudio",
+        "codex-login",
+        "codex-model-provider-info",
+        "codex-models-manager",
+        "codex-network-proxy",
+        "codex-ollama",
+        "codex-realtime-webrtc",
+        "codex-responses-api-proxy",
+        "codex-client",
+        "codex-api",
+        "codex-model-provider"
+      ],
+      "size": 17
+    },
+    {
+      "name": "Execution & Sandboxing",
+      "color": "#ef4444",
+      "purpose": "Running untrusted shell commands. Linux Landlock+seccomp (codex-linux-sandbox/codex-bwrap), Windows AppContainer (codex-windows-sandbox), execpolicy DSL, apply-patch tool, arg0 multicall dispatch.",
+      "components": [
+        "codex-bwrap",
+        "codex-apply-patch",
+        "codex-arg0",
+        "codex-shell-command",
+        "codex-shell-escalation",
+        "codex-execpolicy",
+        "codex-execpolicy-legacy",
+        "codex-linux-sandbox",
+        "codex-process-hardening",
+        "codex-sandboxing"
+      ],
+      "size": 10
+    },
+    {
+      "name": "Filesystem / Config",
+      "color": "#a855f7",
+      "purpose": "Reading the user's workspace. codex-config loads ConfigToml + profiles; codex-file-search/codex-file-watcher index and react; codex-git-utils wraps git.",
+      "components": [
+        "codex-config",
+        "codex-file-system",
+        "codex-file-search",
+        "codex-file-watcher",
+        "codex-git-utils"
+      ],
+      "size": 5
+    },
+    {
+      "name": "Cloud / Agents",
+      "color": "#ec4899",
+      "purpose": "Codex Cloud + multi-agent features. codex-cloud-tasks* (cloud task runner), agent identity/graph, external agent session migration, v8-poc.",
+      "components": [
+        "codex-agent-graph-store",
+        "codex-agent-identity",
+        "codex-cloud-requirements",
+        "codex-cloud-tasks",
+        "codex-cloud-tasks-client",
+        "codex-cloud-tasks-mock-client",
+        "codex-external-agent-migration",
+        "codex-external-agent-sessions",
+        "codex-v8-poc"
+      ],
+      "size": 9
+    },
+    {
+      "name": "Observability / Telemetry",
+      "color": "#94a3b8",
+      "purpose": "Analytics, OpenTelemetry exporter, ANSI/terminal detection, async utilities used by everything.",
+      "components": [
+        "codex-analytics",
+        "codex-ansi-escape",
+        "codex-async-utils",
+        "codex-otel",
+        "codex-terminal-detection",
+        "codex-test-binary-support"
+      ],
+      "size": 6
+    },
+    {
+      "name": "Utils",
+      "color": "#64748b",
+      "purpose": "Pure-leaf helpers (path utils, fuzzy match, json/toml, image, pty, etc.). Should depend on nothing internal.",
+      "components": [
+        "codex-utils-absolute-path",
+        "codex-utils-cargo-bin",
+        "codex-utils-cache",
+        "codex-utils-image",
+        "codex-utils-json-to-toml",
+        "codex-utils-home-dir",
+        "codex-utils-pty",
+        "codex-utils-readiness",
+        "codex-utils-rustls-provider",
+        "codex-utils-string",
+        "codex-utils-cli",
+        "codex-utils-elapsed",
+        "codex-utils-sandbox-summary",
+        "codex-utils-sleep-inhibitor",
+        "codex-utils-approval-presets",
+        "codex-utils-oss",
+        "codex-utils-output-truncation",
+        "codex-utils-path",
+        "codex-utils-fuzzy-match",
+        "codex-utils-stream-parser",
+        "codex-utils-template"
+      ],
+      "size": 21
+    }
+  ],
+  "components": [
+    {
+      "id": "codex-aws-auth",
+      "name": "codex-aws-auth",
+      "kind": "rust-crate",
+      "layer": "Model Providers & Auth",
+      "rel_path": "aws-auth",
+      "abs_path": "codex-rs/aws-auth",
+      "summary": "AWS SigV4 signing for Bedrock-style providers.",
+      "lines": 375,
+      "file_count": 3,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [],
+      "key_files": [
+        "codex-rs/aws-auth/src/lib.rs",
+        "codex-rs/aws-auth/src/signing.rs",
+        "codex-rs/aws-auth/src/config.rs"
+      ]
+    },
+    {
+      "id": "codex-analytics",
+      "name": "codex-analytics",
+      "kind": "rust-crate",
+      "layer": "Observability / Telemetry",
+      "rel_path": "analytics",
+      "abs_path": "codex-rs/analytics",
+      "summary": "First-party analytics client (accepted_lines, events, etc.). Tested heavily.",
+      "lines": 9236,
+      "file_count": 8,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-app-server-protocol",
+        "codex-git-utils",
+        "codex-login",
+        "codex-model-provider",
+        "codex-plugin",
+        "codex-protocol",
+        "codex-utils-absolute-path"
+      ],
+      "key_files": [
+        "codex-rs/analytics/src/analytics_client_tests.rs",
+        "codex-rs/analytics/src/reducer.rs",
+        "codex-rs/analytics/src/events.rs",
+        "codex-rs/analytics/src/client.rs",
+        "codex-rs/analytics/src/facts.rs"
+      ]
+    },
+    {
+      "id": "codex-agent-graph-store",
+      "name": "codex-agent-graph-store",
+      "kind": "rust-crate",
+      "layer": "Cloud / Agents",
+      "rel_path": "agent-graph-store",
+      "abs_path": "codex-rs/agent-graph-store",
+      "summary": "Storage for agent-to-agent relationship graphs.",
+      "lines": 454,
+      "file_count": 5,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-protocol",
+        "codex-state"
+      ],
+      "key_files": [
+        "codex-rs/agent-graph-store/src/local.rs",
+        "codex-rs/agent-graph-store/src/store.rs",
+        "codex-rs/agent-graph-store/src/types.rs",
+        "codex-rs/agent-graph-store/src/error.rs",
+        "codex-rs/agent-graph-store/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-agent-identity",
+      "name": "codex-agent-identity",
+      "kind": "rust-crate",
+      "layer": "Cloud / Agents",
+      "rel_path": "agent-identity",
+      "abs_path": "codex-rs/agent-identity",
+      "summary": "Identity / signing for autonomous agents.",
+      "lines": 737,
+      "file_count": 1,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-protocol"
+      ],
+      "key_files": [
+        "codex-rs/agent-identity/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-backend-client",
+      "name": "codex-backend-client",
+      "kind": "rust-crate",
+      "layer": "Model Providers & Auth",
+      "rel_path": "backend-client",
+      "abs_path": "codex-rs/backend-client",
+      "summary": "Generic backend HTTP client.",
+      "lines": 1253,
+      "file_count": 3,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-api",
+        "codex-client",
+        "codex-login",
+        "codex-model-provider",
+        "codex-protocol"
+      ],
+      "key_files": [
+        "codex-rs/backend-client/src/client.rs",
+        "codex-rs/backend-client/src/types.rs",
+        "codex-rs/backend-client/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-bwrap",
+      "name": "codex-bwrap",
+      "kind": "rust-crate",
+      "layer": "Execution & Sandboxing",
+      "rel_path": "bwrap",
+      "abs_path": "codex-rs/bwrap",
+      "summary": "bubblewrap-based sandbox alternative.",
+      "lines": 45,
+      "file_count": 1,
+      "has_bin": true,
+      "has_lib": false,
+      "deps": [],
+      "key_files": [
+        "codex-rs/bwrap/src/main.rs"
+      ]
+    },
+    {
+      "id": "codex-ansi-escape",
+      "name": "codex-ansi-escape",
+      "kind": "rust-crate",
+      "layer": "Observability / Telemetry",
+      "rel_path": "ansi-escape",
+      "abs_path": "codex-rs/ansi-escape",
+      "summary": "ANSI escape parsing/rendering helpers.",
+      "lines": 58,
+      "file_count": 1,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [],
+      "key_files": [
+        "codex-rs/ansi-escape/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-async-utils",
+      "name": "codex-async-utils",
+      "kind": "rust-crate",
+      "layer": "Observability / Telemetry",
+      "rel_path": "async-utils",
+      "abs_path": "codex-rs/async-utils",
+      "summary": "Shared async helpers.",
+      "lines": 86,
+      "file_count": 1,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [],
+      "key_files": [
+        "codex-rs/async-utils/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-app-server",
+      "name": "codex-app-server",
+      "kind": "rust-crate",
+      "layer": "App Server (IPC)",
+      "rel_path": "app-server",
+      "abs_path": "codex-rs/app-server",
+      "summary": "Long-running daemon that IDE clients connect to. Speaks JSON-RPC over stdio/unix/websocket using codex-app-server-protocol.",
+      "lines": 39229,
+      "file_count": 67,
+      "has_bin": true,
+      "has_lib": true,
+      "deps": [
+        "app_test_support",
+        "codex-analytics",
+        "codex-app-server-protocol",
+        "codex-app-server-transport",
+        "codex-arg0",
+        "codex-backend-client",
+        "codex-chatgpt",
+        "codex-cloud-requirements",
+        "codex-config",
+        "codex-core",
+        "codex-core-plugins",
+        "codex-exec-server",
+        "codex-extension-api",
+        "codex-external-agent-migration",
+        "codex-external-agent-sessions",
+        "codex-features",
+        "codex-feedback",
+        "codex-file-search",
+        "codex-file-watcher",
+        "codex-git-utils",
+        "codex-guardian",
+        "codex-hooks",
+        "codex-login",
+        "codex-mcp",
+        "codex-memories-extension",
+        "codex-memories-write",
+        "codex-model-provider",
+        "codex-model-provider-info",
+        "codex-models-manager",
+        "codex-otel",
+        "codex-plugin",
+        "codex-protocol",
+        "codex-rmcp-client",
+        "codex-rollout",
+        "codex-sandboxing",
+        "codex-shell-command",
+        "codex-state",
+        "codex-thread-store",
+        "codex-tools",
+        "codex-utils-absolute-path",
+        "codex-utils-cargo-bin",
+        "codex-utils-cli",
+        "codex-utils-json-to-toml",
+        "codex-utils-pty",
+        "core_test_support"
+      ],
+      "key_files": [
+        "codex-rs/app-server/src/request_processors/thread_processor.rs",
+        "codex-rs/app-server/src/bespoke_event_handling.rs",
+        "codex-rs/app-server/src/config/external_agent_config_tests.rs",
+        "codex-rs/app-server/src/request_processors/plugins.rs",
+        "codex-rs/app-server/src/config/external_agent_config.rs"
+      ]
+    },
+    {
+      "id": "codex-app-server-transport",
+      "name": "codex-app-server-transport",
+      "kind": "rust-crate",
+      "layer": "App Server (IPC)",
+      "rel_path": "app-server-transport",
+      "abs_path": "codex-rs/app-server-transport",
+      "summary": "Transport layer: stdio, Unix domain socket, websocket, with auth.",
+      "lines": 9150,
+      "file_count": 16,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-api",
+        "codex-app-server-protocol",
+        "codex-config",
+        "codex-core",
+        "codex-login",
+        "codex-model-provider",
+        "codex-state",
+        "codex-uds",
+        "codex-utils-absolute-path",
+        "codex-utils-rustls-provider"
+      ],
+      "key_files": [
+        "codex-rs/app-server-transport/src/transport/remote_control/websocket.rs",
+        "codex-rs/app-server-transport/src/transport/remote_control/tests.rs",
+        "codex-rs/app-server-transport/src/transport/auth.rs",
+        "codex-rs/app-server-transport/src/transport/remote_control/client_tracker.rs",
+        "codex-rs/app-server-transport/src/transport/remote_control/enroll.rs"
+      ]
+    },
+    {
+      "id": "codex-app-server-daemon",
+      "name": "codex-app-server-daemon",
+      "kind": "rust-crate",
+      "layer": "App Server (IPC)",
+      "rel_path": "app-server-daemon",
+      "abs_path": "codex-rs/app-server-daemon",
+      "summary": "Lifecycle helpers: bootstrap, remote-control, daemonization for the app-server.",
+      "lines": 3021,
+      "file_count": 11,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-app-server-protocol",
+        "codex-app-server-transport",
+        "codex-uds",
+        "codex-utils-home-dir"
+      ],
+      "key_files": [
+        "codex-rs/app-server-daemon/src/lib.rs",
+        "codex-rs/app-server-daemon/src/backend/pid.rs",
+        "codex-rs/app-server-daemon/src/remote_control_client.rs",
+        "codex-rs/app-server-daemon/src/update_loop.rs",
+        "codex-rs/app-server-daemon/src/backend/pid_tests.rs"
+      ]
+    },
+    {
+      "id": "codex-app-server-client",
+      "name": "codex-app-server-client",
+      "kind": "rust-crate",
+      "layer": "App Server (IPC)",
+      "rel_path": "app-server-client",
+      "abs_path": "codex-rs/app-server-client",
+      "summary": "codex-app-server-client: internal crate, no curated summary.",
+      "lines": 3314,
+      "file_count": 2,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-app-server",
+        "codex-app-server-protocol",
+        "codex-arg0",
+        "codex-config",
+        "codex-core",
+        "codex-exec-server",
+        "codex-feedback",
+        "codex-protocol",
+        "codex-uds",
+        "codex-utils-absolute-path",
+        "codex-utils-rustls-provider"
+      ],
+      "key_files": [
+        "codex-rs/app-server-client/src/lib.rs",
+        "codex-rs/app-server-client/src/remote.rs"
+      ]
+    },
+    {
+      "id": "codex-app-server-protocol",
+      "name": "codex-app-server-protocol",
+      "kind": "rust-crate",
+      "layer": "App Server (IPC)",
+      "rel_path": "app-server-protocol",
+      "abs_path": "codex-rs/app-server-protocol",
+      "summary": "Wire types for the app-server JSON-RPC API. Versioned, shared with TypeScript SDK.",
+      "lines": 23967,
+      "file_count": 44,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-experimental-api-macros",
+        "codex-protocol",
+        "codex-shell-command",
+        "codex-utils-absolute-path",
+        "codex-utils-cargo-bin"
+      ],
+      "key_files": [
+        "codex-rs/app-server-protocol/src/protocol/v2/tests.rs",
+        "codex-rs/app-server-protocol/src/protocol/thread_history.rs",
+        "codex-rs/app-server-protocol/src/protocol/common.rs",
+        "codex-rs/app-server-protocol/src/export.rs",
+        "codex-rs/app-server-protocol/src/protocol/v2/item.rs"
+      ]
+    },
+    {
+      "id": "codex-app-server-test-client",
+      "name": "codex-app-server-test-client",
+      "kind": "rust-crate",
+      "layer": "App Server (IPC)",
+      "rel_path": "app-server-test-client",
+      "abs_path": "codex-rs/app-server-test-client",
+      "summary": "codex-app-server-test-client: internal crate, no curated summary.",
+      "lines": 2238,
+      "file_count": 2,
+      "has_bin": true,
+      "has_lib": true,
+      "deps": [
+        "codex-app-server-protocol",
+        "codex-core",
+        "codex-otel",
+        "codex-protocol",
+        "codex-utils-cli"
+      ],
+      "key_files": [
+        "codex-rs/app-server-test-client/src/lib.rs",
+        "codex-rs/app-server-test-client/src/main.rs"
+      ]
+    },
+    {
+      "id": "codex-debug-client",
+      "name": "codex-debug-client",
+      "kind": "rust-crate",
+      "layer": "App Server (IPC)",
+      "rel_path": "debug-client",
+      "abs_path": "codex-rs/debug-client",
+      "summary": "codex-debug-client: internal crate, no curated summary.",
+      "lines": 1423,
+      "file_count": 6,
+      "has_bin": true,
+      "has_lib": false,
+      "deps": [],
+      "key_files": [
+        "codex-rs/debug-client/src/client.rs",
+        "codex-rs/debug-client/src/reader.rs",
+        "codex-rs/debug-client/src/main.rs",
+        "codex-rs/debug-client/src/output.rs",
+        "codex-rs/debug-client/src/commands.rs"
+      ]
+    },
+    {
+      "id": "codex-apply-patch",
+      "name": "codex-apply-patch",
+      "kind": "rust-crate",
+      "layer": "Execution & Sandboxing",
+      "rel_path": "apply-patch",
+      "abs_path": "codex-rs/apply-patch",
+      "summary": "The apply_patch tool: structured file editing primitive.",
+      "lines": 4672,
+      "file_count": 7,
+      "has_bin": true,
+      "has_lib": true,
+      "deps": [
+        "codex-exec-server",
+        "codex-utils-absolute-path",
+        "codex-utils-cargo-bin"
+      ],
+      "key_files": [
+        "codex-rs/apply-patch/src/lib.rs",
+        "codex-rs/apply-patch/src/parser.rs",
+        "codex-rs/apply-patch/src/invocation.rs",
+        "codex-rs/apply-patch/src/streaming_parser.rs",
+        "codex-rs/apply-patch/src/seek_sequence.rs"
+      ]
+    },
+    {
+      "id": "codex-arg0",
+      "name": "codex-arg0",
+      "kind": "rust-crate",
+      "layer": "Execution & Sandboxing",
+      "rel_path": "arg0",
+      "abs_path": "codex-rs/arg0",
+      "summary": "Multicall dispatch: makes one binary behave like several based on argv[0].",
+      "lines": 585,
+      "file_count": 1,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-apply-patch",
+        "codex-exec-server",
+        "codex-linux-sandbox",
+        "codex-sandboxing",
+        "codex-shell-escalation",
+        "codex-utils-absolute-path",
+        "codex-utils-home-dir"
+      ],
+      "key_files": [
+        "codex-rs/arg0/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-feedback",
+      "name": "codex-feedback",
+      "kind": "rust-crate",
+      "layer": "Core Orchestration",
+      "rel_path": "feedback",
+      "abs_path": "codex-rs/feedback",
+      "summary": "User feedback collection.",
+      "lines": 1049,
+      "file_count": 2,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-login",
+        "codex-protocol"
+      ],
+      "key_files": [
+        "codex-rs/feedback/src/lib.rs",
+        "codex-rs/feedback/src/feedback_diagnostics.rs"
+      ]
+    },
+    {
+      "id": "codex-features",
+      "name": "codex-features",
+      "kind": "rust-crate",
+      "layer": "Core Orchestration",
+      "rel_path": "features",
+      "abs_path": "codex-rs/features",
+      "summary": "FEATURES + Stage flag registry; gates beta/alpha features.",
+      "lines": 2186,
+      "file_count": 4,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-otel",
+        "codex-protocol"
+      ],
+      "key_files": [
+        "codex-rs/features/src/lib.rs",
+        "codex-rs/features/src/tests.rs",
+        "codex-rs/features/src/feature_configs.rs",
+        "codex-rs/features/src/legacy.rs"
+      ]
+    },
+    {
+      "id": "codex-install-context",
+      "name": "codex-install-context",
+      "kind": "rust-crate",
+      "layer": "Core Orchestration",
+      "rel_path": "install-context",
+      "abs_path": "codex-rs/install-context",
+      "summary": "Detects how Codex was installed (brew, npm, curl) for telemetry.",
+      "lines": 609,
+      "file_count": 1,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-utils-absolute-path",
+        "codex-utils-home-dir"
+      ],
+      "key_files": [
+        "codex-rs/install-context/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-backend-openapi-models",
+      "name": "codex-backend-openapi-models",
+      "kind": "rust-crate",
+      "layer": "Model Providers & Auth",
+      "rel_path": "codex-backend-openapi-models",
+      "abs_path": "codex-rs/codex-backend-openapi-models",
+      "summary": "Generated OpenAPI model types for the backend.",
+      "lines": 706,
+      "file_count": 14,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [],
+      "key_files": [
+        "codex-rs/codex-backend-openapi-models/src/models/rate_limit_status_payload.rs",
+        "codex-rs/codex-backend-openapi-models/src/models/git_pull_request.rs",
+        "codex-rs/codex-backend-openapi-models/src/models/task_list_item.rs",
+        "codex-rs/codex-backend-openapi-models/src/models/task_response.rs",
+        "codex-rs/codex-backend-openapi-models/src/models/credit_status_details.rs"
+      ]
+    },
+    {
+      "id": "codex-code-mode",
+      "name": "codex-code-mode",
+      "kind": "rust-crate",
+      "layer": "Core Orchestration",
+      "rel_path": "code-mode",
+      "abs_path": "codex-rs/code-mode",
+      "summary": "/code mode that switches the agent into a structured coding workflow.",
+      "lines": 4257,
+      "file_count": 10,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-protocol"
+      ],
+      "key_files": [
+        "codex-rs/code-mode/src/service.rs",
+        "codex-rs/code-mode/src/description.rs",
+        "codex-rs/code-mode/src/runtime/mod.rs",
+        "codex-rs/code-mode/src/runtime/callbacks.rs",
+        "codex-rs/code-mode/src/runtime/module_loader.rs"
+      ]
+    },
+    {
+      "id": "codex-cloud-requirements",
+      "name": "codex-cloud-requirements",
+      "kind": "rust-crate",
+      "layer": "Cloud / Agents",
+      "rel_path": "cloud-requirements",
+      "abs_path": "codex-rs/cloud-requirements",
+      "summary": "codex-cloud-requirements: internal crate, no curated summary.",
+      "lines": 2466,
+      "file_count": 1,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-backend-client",
+        "codex-config",
+        "codex-core",
+        "codex-login",
+        "codex-otel",
+        "codex-protocol",
+        "codex-utils-absolute-path"
+      ],
+      "key_files": [
+        "codex-rs/cloud-requirements/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-cloud-tasks",
+      "name": "codex-cloud-tasks",
+      "kind": "rust-crate",
+      "layer": "Cloud / Agents",
+      "rel_path": "cloud-tasks",
+      "abs_path": "codex-rs/cloud-tasks",
+      "summary": "Codex Cloud task runner.",
+      "lines": 4767,
+      "file_count": 8,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-client",
+        "codex-cloud-tasks-client",
+        "codex-cloud-tasks-mock-client",
+        "codex-core",
+        "codex-git-utils",
+        "codex-model-provider",
+        "codex-tui",
+        "codex-utils-cli"
+      ],
+      "key_files": [
+        "codex-rs/cloud-tasks/src/lib.rs",
+        "codex-rs/cloud-tasks/src/ui.rs",
+        "codex-rs/cloud-tasks/src/app.rs",
+        "codex-rs/cloud-tasks/src/env_detect.rs",
+        "codex-rs/cloud-tasks/src/scrollable_diff.rs"
+      ]
+    },
+    {
+      "id": "codex-cloud-tasks-client",
+      "name": "codex-cloud-tasks-client",
+      "kind": "rust-crate",
+      "layer": "Cloud / Agents",
+      "rel_path": "cloud-tasks-client",
+      "abs_path": "codex-rs/cloud-tasks-client",
+      "summary": "Client for talking to the Codex Cloud task API.",
+      "lines": 1097,
+      "file_count": 3,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-api",
+        "codex-backend-client",
+        "codex-git-utils"
+      ],
+      "key_files": [
+        "codex-rs/cloud-tasks-client/src/http.rs",
+        "codex-rs/cloud-tasks-client/src/api.rs",
+        "codex-rs/cloud-tasks-client/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-cloud-tasks-mock-client",
+      "name": "codex-cloud-tasks-mock-client",
+      "kind": "rust-crate",
+      "layer": "Cloud / Agents",
+      "rel_path": "cloud-tasks-mock-client",
+      "abs_path": "codex-rs/cloud-tasks-mock-client",
+      "summary": "Mock cloud-tasks client for tests.",
+      "lines": 206,
+      "file_count": 2,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-cloud-tasks-client"
+      ],
+      "key_files": [
+        "codex-rs/cloud-tasks-mock-client/src/mock.rs",
+        "codex-rs/cloud-tasks-mock-client/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-cli",
+      "name": "codex-cli",
+      "kind": "rust-crate",
+      "layer": "Presentation (CLI/TUI)",
+      "rel_path": "cli",
+      "abs_path": "codex-rs/cli",
+      "summary": "The unified codex binary entry. Dispatches subcommands (login, mcp, plugin, doctor, app) and delegates to tui/exec/app-server/responses-api-proxy via arg0.",
+      "lines": 18089,
+      "file_count": 28,
+      "has_bin": true,
+      "has_lib": true,
+      "deps": [
+        "codex-api",
+        "codex-app-server",
+        "codex-app-server-daemon",
+        "codex-app-server-protocol",
+        "codex-app-server-test-client",
+        "codex-arg0",
+        "codex-chatgpt",
+        "codex-config",
+        "codex-core",
+        "codex-core-plugins",
+        "codex-exec",
+        "codex-exec-server",
+        "codex-execpolicy",
+        "codex-features",
+        "codex-git-utils",
+        "codex-install-context",
+        "codex-login",
+        "codex-mcp",
+        "codex-mcp-server",
+        "codex-memories-write",
+        "codex-model-provider",
+        "codex-models-manager",
+        "codex-plugin",
+        "codex-protocol",
+        "codex-responses-api-proxy",
+        "codex-rmcp-client",
+        "codex-rollout",
+        "codex-rollout-trace",
+        "codex-sandboxing",
+        "codex-state",
+        "codex-stdio-to-uds",
+        "codex-terminal-detection",
+        "codex-tui",
+        "codex-utils-absolute-path",
+        "codex-utils-cargo-bin",
+        "codex-utils-cli",
+        "codex-utils-path"
+      ],
+      "key_files": [
+        "codex-rs/cli/src/doctor.rs",
+        "codex-rs/cli/src/main.rs",
+        "codex-rs/cli/src/doctor/output.rs",
+        "codex-rs/cli/src/debug_sandbox.rs",
+        "codex-rs/cli/src/mcp_cmd.rs"
+      ]
+    },
+    {
+      "id": "codex-collaboration-mode-templates",
+      "name": "codex-collaboration-mode-templates",
+      "kind": "rust-crate",
+      "layer": "Core Orchestration",
+      "rel_path": "collaboration-mode-templates",
+      "abs_path": "codex-rs/collaboration-mode-templates",
+      "summary": "Templates for multi-user collaboration mode.",
+      "lines": 4,
+      "file_count": 1,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [],
+      "key_files": [
+        "codex-rs/collaboration-mode-templates/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-connectors",
+      "name": "codex-connectors",
+      "kind": "rust-crate",
+      "layer": "Model Providers & Auth",
+      "rel_path": "connectors",
+      "abs_path": "codex-rs/connectors",
+      "summary": "External-service connectors (the codex-core connectors module wraps this).",
+      "lines": 1457,
+      "file_count": 6,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-app-server-protocol"
+      ],
+      "key_files": [
+        "codex-rs/connectors/src/lib.rs",
+        "codex-rs/connectors/src/filter.rs",
+        "codex-rs/connectors/src/merge.rs",
+        "codex-rs/connectors/src/directory_cache.rs",
+        "codex-rs/connectors/src/accessible.rs"
+      ]
+    },
+    {
+      "id": "codex-config",
+      "name": "codex-config",
+      "kind": "rust-crate",
+      "layer": "Filesystem / Config",
+      "rel_path": "config",
+      "abs_path": "codex-rs/config",
+      "summary": "Loads ~/.codex/config.toml, profiles, overrides; writes ConfigToml schema. Run just write-config-schema after changes.",
+      "lines": 15527,
+      "file_count": 40,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-app-server-protocol",
+        "codex-execpolicy",
+        "codex-features",
+        "codex-file-system",
+        "codex-git-utils",
+        "codex-model-provider-info",
+        "codex-network-proxy",
+        "codex-protocol",
+        "codex-utils-absolute-path",
+        "codex-utils-path"
+      ],
+      "key_files": [
+        "codex-rs/config/src/config_requirements.rs",
+        "codex-rs/config/src/loader/mod.rs",
+        "codex-rs/config/src/config_toml.rs",
+        "codex-rs/config/src/types.rs",
+        "codex-rs/config/src/permissions_toml.rs"
+      ]
+    },
+    {
+      "id": "codex-shell-command",
+      "name": "codex-shell-command",
+      "kind": "rust-crate",
+      "layer": "Execution & Sandboxing",
+      "rel_path": "shell-command",
+      "abs_path": "codex-rs/shell-command",
+      "summary": "Shell command parsing/quoting.",
+      "lines": 5992,
+      "file_count": 11,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-protocol",
+        "codex-utils-absolute-path"
+      ],
+      "key_files": [
+        "codex-rs/shell-command/src/parse_command.rs",
+        "codex-rs/shell-command/src/command_safety/windows_dangerous_commands.rs",
+        "codex-rs/shell-command/src/command_safety/is_safe_command.rs",
+        "codex-rs/shell-command/src/bash.rs",
+        "codex-rs/shell-command/src/command_safety/windows_safe_commands.rs"
+      ]
+    },
+    {
+      "id": "codex-shell-escalation",
+      "name": "codex-shell-escalation",
+      "kind": "rust-crate",
+      "layer": "Execution & Sandboxing",
+      "rel_path": "shell-escalation",
+      "abs_path": "codex-rs/shell-escalation",
+      "summary": "Approval flow when a command needs user consent (sudo-style escalation).",
+      "lines": 2217,
+      "file_count": 10,
+      "has_bin": true,
+      "has_lib": true,
+      "deps": [
+        "codex-protocol",
+        "codex-utils-absolute-path"
+      ],
+      "key_files": [
+        "codex-rs/shell-escalation/src/unix/escalate_server.rs",
+        "codex-rs/shell-escalation/src/unix/socket.rs",
+        "codex-rs/shell-escalation/src/unix/stopwatch.rs",
+        "codex-rs/shell-escalation/src/unix/escalate_client.rs",
+        "codex-rs/shell-escalation/src/unix/escalate_protocol.rs"
+      ]
+    },
+    {
+      "id": "codex-skills",
+      "name": "codex-skills",
+      "kind": "rust-crate",
+      "layer": "Plugins / Skills / Hooks",
+      "rel_path": "skills",
+      "abs_path": "codex-rs/skills",
+      "summary": "Skill catalog; discoverable behaviors that can be invoked by slash commands.",
+      "lines": 169,
+      "file_count": 1,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-utils-absolute-path"
+      ],
+      "key_files": [
+        "codex-rs/skills/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-core",
+      "name": "codex-core",
+      "kind": "rust-crate",
+      "layer": "Core Orchestration",
+      "rel_path": "core",
+      "abs_path": "codex-rs/core",
+      "summary": "Agent loop, conversation state, tool execution, compaction. The brain; but per AGENTS.md, prefer new sibling crates over expanding it.",
+      "lines": 151415,
+      "file_count": 338,
+      "has_bin": true,
+      "has_lib": true,
+      "deps": [
+        "codex-analytics",
+        "codex-api",
+        "codex-app-server-protocol",
+        "codex-apply-patch",
+        "codex-async-utils",
+        "codex-code-mode",
+        "codex-config",
+        "codex-connectors",
+        "codex-core-plugins",
+        "codex-core-skills",
+        "codex-exec-server",
+        "codex-execpolicy",
+        "codex-extension-api",
+        "codex-features",
+        "codex-feedback",
+        "codex-git-utils",
+        "codex-hooks",
+        "codex-install-context",
+        "codex-login",
+        "codex-mcp",
+        "codex-memories-read",
+        "codex-model-provider",
+        "codex-model-provider-info",
+        "codex-models-manager",
+        "codex-network-proxy",
+        "codex-otel",
+        "codex-plugin",
+        "codex-protocol",
+        "codex-response-debug-context",
+        "codex-rmcp-client",
+        "codex-rollout",
+        "codex-rollout-trace",
+        "codex-sandboxing",
+        "codex-shell-command",
+        "codex-shell-escalation",
+        "codex-state",
+        "codex-terminal-detection",
+        "codex-test-binary-support",
+        "codex-thread-store",
+        "codex-tools",
+        "codex-utils-absolute-path",
+        "codex-utils-cache",
+        "codex-utils-cargo-bin",
+        "codex-utils-home-dir",
+        "codex-utils-image",
+        "codex-utils-output-truncation",
+        "codex-utils-path",
+        "codex-utils-plugins",
+        "codex-utils-pty",
+        "codex-utils-stream-parser",
+        "codex-utils-string",
+        "codex-utils-template",
+        "core_test_support"
+      ],
+      "key_files": [
+        "codex-rs/core/src/config/config_tests.rs",
+        "codex-rs/core/src/config/mod.rs",
+        "codex-rs/core/src/config/config_loader_tests.rs",
+        "codex-rs/core/src/agent/control_tests.rs",
+        "codex-rs/core/src/client.rs"
+      ]
+    },
+    {
+      "id": "codex-core-api",
+      "name": "codex-core-api",
+      "kind": "rust-crate",
+      "layer": "Core Orchestration",
+      "rel_path": "core-api",
+      "abs_path": "codex-rs/core-api",
+      "summary": "codex-core-api: internal crate, no curated summary.",
+      "lines": 79,
+      "file_count": 1,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-analytics",
+        "codex-app-server-protocol",
+        "codex-arg0",
+        "codex-config",
+        "codex-core",
+        "codex-exec-server",
+        "codex-extension-api",
+        "codex-features",
+        "codex-login",
+        "codex-model-provider-info",
+        "codex-models-manager",
+        "codex-protocol",
+        "codex-utils-absolute-path"
+      ],
+      "key_files": [
+        "codex-rs/core-api/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-core-plugins",
+      "name": "codex-core-plugins",
+      "kind": "rust-crate",
+      "layer": "Plugins / Skills / Hooks",
+      "rel_path": "core-plugins",
+      "abs_path": "codex-rs/core-plugins",
+      "summary": "Built-in plugin host that loads .codex/plugins.",
+      "lines": 21197,
+      "file_count": 34,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-analytics",
+        "codex-app-server-protocol",
+        "codex-config",
+        "codex-core-skills",
+        "codex-exec-server",
+        "codex-git-utils",
+        "codex-hooks",
+        "codex-login",
+        "codex-model-provider",
+        "codex-otel",
+        "codex-plugin",
+        "codex-protocol",
+        "codex-utils-absolute-path",
+        "codex-utils-plugins"
+      ],
+      "key_files": [
+        "codex-rs/core-plugins/src/manager_tests.rs",
+        "codex-rs/core-plugins/src/manager.rs",
+        "codex-rs/core-plugins/src/marketplace_tests.rs",
+        "codex-rs/core-plugins/src/remote.rs",
+        "codex-rs/core-plugins/src/loader.rs"
+      ]
+    },
+    {
+      "id": "codex-core-skills",
+      "name": "codex-core-skills",
+      "kind": "rust-crate",
+      "layer": "Plugins / Skills / Hooks",
+      "rel_path": "core-skills",
+      "abs_path": "codex-rs/core-skills",
+      "summary": "Bundled first-party skills.",
+      "lines": 7256,
+      "file_count": 15,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-analytics",
+        "codex-app-server-protocol",
+        "codex-config",
+        "codex-exec-server",
+        "codex-login",
+        "codex-model-provider",
+        "codex-otel",
+        "codex-protocol",
+        "codex-skills",
+        "codex-utils-absolute-path",
+        "codex-utils-output-truncation",
+        "codex-utils-plugins"
+      ],
+      "key_files": [
+        "codex-rs/core-skills/src/loader_tests.rs",
+        "codex-rs/core-skills/src/render.rs",
+        "codex-rs/core-skills/src/loader.rs",
+        "codex-rs/core-skills/src/manager_tests.rs",
+        "codex-rs/core-skills/src/injection.rs"
+      ]
+    },
+    {
+      "id": "codex-hooks",
+      "name": "codex-hooks",
+      "kind": "rust-crate",
+      "layer": "Plugins / Skills / Hooks",
+      "rel_path": "hooks",
+      "abs_path": "codex-rs/hooks",
+      "summary": "User-script hooks (PreToolUse/PostToolUse/etc.) with JSON schema fixtures generated by npm run write-hooks-schema.",
+      "lines": 10514,
+      "file_count": 26,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-config",
+        "codex-plugin",
+        "codex-protocol",
+        "codex-utils-absolute-path",
+        "codex-utils-output-truncation"
+      ],
+      "key_files": [
+        "codex-rs/hooks/src/engine/mod_tests.rs",
+        "codex-rs/hooks/src/schema.rs",
+        "codex-rs/hooks/src/engine/discovery.rs",
+        "codex-rs/hooks/src/events/pre_tool_use.rs",
+        "codex-rs/hooks/src/events/stop.rs"
+      ]
+    },
+    {
+      "id": "codex-secrets",
+      "name": "codex-secrets",
+      "kind": "rust-crate",
+      "layer": "Model Providers & Auth",
+      "rel_path": "secrets",
+      "abs_path": "codex-rs/secrets",
+      "summary": "Higher-level secrets abstraction over keyring/file.",
+      "lines": 682,
+      "file_count": 3,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-git-utils",
+        "codex-keyring-store"
+      ],
+      "key_files": [
+        "codex-rs/secrets/src/local.rs",
+        "codex-rs/secrets/src/lib.rs",
+        "codex-rs/secrets/src/sanitizer.rs"
+      ]
+    },
+    {
+      "id": "codex-exec",
+      "name": "codex-exec",
+      "kind": "rust-crate",
+      "layer": "Presentation (CLI/TUI)",
+      "rel_path": "exec",
+      "abs_path": "codex-rs/exec",
+      "summary": "Non-interactive codex-exec headless agent. Same binary doubles as codex-linux-sandbox via arg0 dispatch.",
+      "lines": 5133,
+      "file_count": 12,
+      "has_bin": true,
+      "has_lib": true,
+      "deps": [
+        "codex-app-server-client",
+        "codex-app-server-protocol",
+        "codex-apply-patch",
+        "codex-arg0",
+        "codex-cloud-requirements",
+        "codex-config",
+        "codex-core",
+        "codex-feedback",
+        "codex-git-utils",
+        "codex-login",
+        "codex-model-provider-info",
+        "codex-otel",
+        "codex-protocol",
+        "codex-utils-absolute-path",
+        "codex-utils-cargo-bin",
+        "codex-utils-cli",
+        "codex-utils-oss",
+        "codex-utils-sandbox-summary",
+        "core_test_support"
+      ],
+      "key_files": [
+        "codex-rs/exec/src/lib.rs",
+        "codex-rs/exec/src/event_processor_with_jsonl_output.rs",
+        "codex-rs/exec/src/lib_tests.rs",
+        "codex-rs/exec/src/event_processor_with_human_output.rs",
+        "codex-rs/exec/src/event_processor_with_human_output_tests.rs"
+      ]
+    },
+    {
+      "id": "codex-file-system",
+      "name": "codex-file-system",
+      "kind": "rust-crate",
+      "layer": "Filesystem / Config",
+      "rel_path": "file-system",
+      "abs_path": "codex-rs/file-system",
+      "summary": "Bounded filesystem access abstraction.",
+      "lines": 192,
+      "file_count": 1,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-protocol",
+        "codex-utils-absolute-path"
+      ],
+      "key_files": [
+        "codex-rs/file-system/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-exec-server",
+      "name": "codex-exec-server",
+      "kind": "rust-crate",
+      "layer": "Presentation (CLI/TUI)",
+      "rel_path": "exec-server",
+      "abs_path": "codex-rs/exec-server",
+      "summary": "Long-lived codex-exec-style server for IDE/automation integrations that prefer plain stdio over the full app-server protocol.",
+      "lines": 13358,
+      "file_count": 39,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-api",
+        "codex-app-server-protocol",
+        "codex-client",
+        "codex-file-system",
+        "codex-protocol",
+        "codex-sandboxing",
+        "codex-test-binary-support",
+        "codex-utils-absolute-path",
+        "codex-utils-pty",
+        "codex-utils-rustls-provider"
+      ],
+      "key_files": [
+        "codex-rs/exec-server/src/client.rs",
+        "codex-rs/exec-server/src/local_process.rs",
+        "codex-rs/exec-server/src/environment_toml.rs",
+        "codex-rs/exec-server/src/connection.rs",
+        "codex-rs/exec-server/src/environment.rs"
+      ]
+    },
+    {
+      "id": "codex-execpolicy",
+      "name": "codex-execpolicy",
+      "kind": "rust-crate",
+      "layer": "Execution & Sandboxing",
+      "rel_path": "execpolicy",
+      "abs_path": "codex-rs/execpolicy",
+      "summary": "DSL + interpreter for execpolicy rules; which commands the agent may run without approval.",
+      "lines": 1790,
+      "file_count": 10,
+      "has_bin": true,
+      "has_lib": true,
+      "deps": [
+        "codex-utils-absolute-path"
+      ],
+      "key_files": [
+        "codex-rs/execpolicy/src/parser.rs",
+        "codex-rs/execpolicy/src/policy.rs",
+        "codex-rs/execpolicy/src/amend.rs",
+        "codex-rs/execpolicy/src/rule.rs",
+        "codex-rs/execpolicy/src/error.rs"
+      ]
+    },
+    {
+      "id": "codex-execpolicy-legacy",
+      "name": "codex-execpolicy-legacy",
+      "kind": "rust-crate",
+      "layer": "Execution & Sandboxing",
+      "rel_path": "execpolicy-legacy",
+      "abs_path": "codex-rs/execpolicy-legacy",
+      "summary": "codex-execpolicy-legacy: internal crate, no curated summary.",
+      "lines": 1807,
+      "file_count": 14,
+      "has_bin": true,
+      "has_lib": true,
+      "deps": [],
+      "key_files": [
+        "codex-rs/execpolicy-legacy/src/execv_checker.rs",
+        "codex-rs/execpolicy-legacy/src/program.rs",
+        "codex-rs/execpolicy-legacy/src/policy_parser.rs",
+        "codex-rs/execpolicy-legacy/src/arg_resolver.rs",
+        "codex-rs/execpolicy-legacy/src/main.rs"
+      ]
+    },
+    {
+      "id": "codex-extension-api",
+      "name": "codex-extension-api",
+      "kind": "rust-crate",
+      "layer": "Extensions",
+      "rel_path": "ext/extension-api",
+      "abs_path": "codex-rs/ext/extension-api",
+      "summary": "Stable surface that the ext/goal, ext/guardian, ext/memories crates implement.",
+      "lines": 816,
+      "file_count": 12,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-protocol",
+        "codex-tools"
+      ],
+      "key_files": [
+        "codex-rs/ext/extension-api/src/registry.rs",
+        "codex-rs/ext/extension-api/src/contributors.rs",
+        "codex-rs/ext/extension-api/src/state.rs",
+        "codex-rs/ext/extension-api/src/contributors/tool_lifecycle.rs",
+        "codex-rs/ext/extension-api/src/contributors/prompt.rs"
+      ]
+    },
+    {
+      "id": "codex-goal-extension",
+      "name": "codex-goal-extension",
+      "kind": "rust-crate",
+      "layer": "Extensions",
+      "rel_path": "ext/goal",
+      "abs_path": "codex-rs/ext/goal",
+      "summary": "Goal-tracking extension.",
+      "lines": 1706,
+      "file_count": 8,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-core",
+        "codex-extension-api",
+        "codex-protocol",
+        "codex-state",
+        "codex-tools"
+      ],
+      "key_files": [
+        "codex-rs/ext/goal/src/tool.rs",
+        "codex-rs/ext/goal/src/accounting.rs",
+        "codex-rs/ext/goal/src/extension.rs",
+        "codex-rs/ext/goal/src/runtime.rs",
+        "codex-rs/ext/goal/src/spec.rs"
+      ]
+    },
+    {
+      "id": "codex-guardian",
+      "name": "codex-guardian",
+      "kind": "rust-crate",
+      "layer": "Extensions",
+      "rel_path": "ext/guardian",
+      "abs_path": "codex-rs/ext/guardian",
+      "summary": "Safety/policy guardrails as an extension.",
+      "lines": 71,
+      "file_count": 1,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-core",
+        "codex-extension-api",
+        "codex-protocol"
+      ],
+      "key_files": [
+        "codex-rs/ext/guardian/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-memories-extension",
+      "name": "codex-memories-extension",
+      "kind": "rust-crate",
+      "layer": "Extensions",
+      "rel_path": "ext/memories",
+      "abs_path": "codex-rs/ext/memories",
+      "summary": "User-facing memories extension (the ad-hoc memory note tool lives here per recent commit history).",
+      "lines": 2143,
+      "file_count": 18,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-core",
+        "codex-extension-api",
+        "codex-features",
+        "codex-otel",
+        "codex-tools",
+        "codex-utils-absolute-path",
+        "codex-utils-output-truncation",
+        "codex-utils-template"
+      ],
+      "key_files": [
+        "codex-rs/ext/memories/src/tests.rs",
+        "codex-rs/ext/memories/src/local/search.rs",
+        "codex-rs/ext/memories/src/backend.rs",
+        "codex-rs/ext/memories/src/local/ad_hoc_note.rs",
+        "codex-rs/ext/memories/src/local.rs"
+      ]
+    },
+    {
+      "id": "codex-external-agent-migration",
+      "name": "codex-external-agent-migration",
+      "kind": "rust-crate",
+      "layer": "Cloud / Agents",
+      "rel_path": "external-agent-migration",
+      "abs_path": "codex-rs/external-agent-migration",
+      "summary": "Migration tooling for external-agent state.",
+      "lines": 2141,
+      "file_count": 1,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-hooks"
+      ],
+      "key_files": [
+        "codex-rs/external-agent-migration/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-external-agent-sessions",
+      "name": "codex-external-agent-sessions",
+      "kind": "rust-crate",
+      "layer": "Cloud / Agents",
+      "rel_path": "external-agent-sessions",
+      "abs_path": "codex-rs/external-agent-sessions",
+      "summary": "Session migration for switching between Codex and other agents.",
+      "lines": 1466,
+      "file_count": 5,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-app-server-protocol",
+        "codex-protocol",
+        "codex-utils-output-truncation"
+      ],
+      "key_files": [
+        "codex-rs/external-agent-sessions/src/export.rs",
+        "codex-rs/external-agent-sessions/src/records.rs",
+        "codex-rs/external-agent-sessions/src/detect.rs",
+        "codex-rs/external-agent-sessions/src/lib.rs",
+        "codex-rs/external-agent-sessions/src/ledger.rs"
+      ]
+    },
+    {
+      "id": "codex-keyring-store",
+      "name": "codex-keyring-store",
+      "kind": "rust-crate",
+      "layer": "Model Providers & Auth",
+      "rel_path": "keyring-store",
+      "abs_path": "codex-rs/keyring-store",
+      "summary": "OS keyring backend for secrets.",
+      "lines": 226,
+      "file_count": 1,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [],
+      "key_files": [
+        "codex-rs/keyring-store/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-file-search",
+      "name": "codex-file-search",
+      "kind": "rust-crate",
+      "layer": "Filesystem / Config",
+      "rel_path": "file-search",
+      "abs_path": "codex-rs/file-search",
+      "summary": "Ripgrep-style search exposed as a tool.",
+      "lines": 1312,
+      "file_count": 3,
+      "has_bin": true,
+      "has_lib": true,
+      "deps": [],
+      "key_files": [
+        "codex-rs/file-search/src/lib.rs",
+        "codex-rs/file-search/src/main.rs",
+        "codex-rs/file-search/src/cli.rs"
+      ]
+    },
+    {
+      "id": "codex-file-watcher",
+      "name": "codex-file-watcher",
+      "kind": "rust-crate",
+      "layer": "Filesystem / Config",
+      "rel_path": "file-watcher",
+      "abs_path": "codex-rs/file-watcher",
+      "summary": "Inotify/FSEvents wrapper used by the TUI and core.",
+      "lines": 1393,
+      "file_count": 2,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [],
+      "key_files": [
+        "codex-rs/file-watcher/src/lib.rs",
+        "codex-rs/file-watcher/src/file_watcher_tests.rs"
+      ]
+    },
+    {
+      "id": "codex-linux-sandbox",
+      "name": "codex-linux-sandbox",
+      "kind": "rust-crate",
+      "layer": "Execution & Sandboxing",
+      "rel_path": "linux-sandbox",
+      "abs_path": "codex-rs/linux-sandbox",
+      "summary": "Landlock + seccomp sandbox helper. Shipped inside the main binaries via arg0.",
+      "lines": 6685,
+      "file_count": 11,
+      "has_bin": true,
+      "has_lib": true,
+      "deps": [
+        "codex-core",
+        "codex-install-context",
+        "codex-process-hardening",
+        "codex-protocol",
+        "codex-sandboxing",
+        "codex-utils-absolute-path"
+      ],
+      "key_files": [
+        "codex-rs/linux-sandbox/src/bwrap.rs",
+        "codex-rs/linux-sandbox/src/linux_run_main.rs",
+        "codex-rs/linux-sandbox/src/proxy_routing.rs",
+        "codex-rs/linux-sandbox/src/linux_run_main_tests.rs",
+        "codex-rs/linux-sandbox/src/landlock.rs"
+      ]
+    },
+    {
+      "id": "codex-lmstudio",
+      "name": "codex-lmstudio",
+      "kind": "rust-crate",
+      "layer": "Model Providers & Auth",
+      "rel_path": "lmstudio",
+      "abs_path": "codex-rs/lmstudio",
+      "summary": "LMStudio provider.",
+      "lines": 443,
+      "file_count": 2,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [],
+      "key_files": [
+        "codex-rs/lmstudio/src/client.rs",
+        "codex-rs/lmstudio/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-login",
+      "name": "codex-login",
+      "kind": "rust-crate",
+      "layer": "Model Providers & Auth",
+      "rel_path": "login",
+      "abs_path": "codex-rs/login",
+      "summary": "ChatGPT sign-in, API key, device-code flow. Surfaces AuthManager + CodexAuth.",
+      "lines": 7328,
+      "file_count": 19,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-agent-identity",
+        "codex-app-server-protocol",
+        "codex-client",
+        "codex-config",
+        "codex-keyring-store",
+        "codex-model-provider-info",
+        "codex-otel",
+        "codex-protocol",
+        "codex-terminal-detection",
+        "codex-utils-template",
+        "core_test_support"
+      ],
+      "key_files": [
+        "codex-rs/login/src/auth/manager.rs",
+        "codex-rs/login/src/server.rs",
+        "codex-rs/login/src/auth/auth_tests.rs",
+        "codex-rs/login/src/auth/storage_tests.rs",
+        "codex-rs/login/src/auth/storage.rs"
+      ]
+    },
+    {
+      "id": "codex-mcp",
+      "name": "codex-mcp",
+      "kind": "rust-crate",
+      "layer": "MCP Protocol",
+      "rel_path": "codex-mcp",
+      "abs_path": "codex-rs/codex-mcp",
+      "summary": "Shared MCP plumbing (connection management, tool/call routing).",
+      "lines": 5641,
+      "file_count": 13,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-api",
+        "codex-async-utils",
+        "codex-config",
+        "codex-exec-server",
+        "codex-login",
+        "codex-model-provider",
+        "codex-otel",
+        "codex-plugin",
+        "codex-protocol",
+        "codex-rmcp-client",
+        "codex-utils-plugins"
+      ],
+      "key_files": [
+        "codex-rs/codex-mcp/src/connection_manager_tests.rs",
+        "codex-rs/codex-mcp/src/connection_manager.rs",
+        "codex-rs/codex-mcp/src/rmcp_client.rs",
+        "codex-rs/codex-mcp/src/mcp/mod.rs",
+        "codex-rs/codex-mcp/src/mcp/mod_tests.rs"
+      ]
+    },
+    {
+      "id": "codex-mcp-server",
+      "name": "codex-mcp-server",
+      "kind": "rust-crate",
+      "layer": "MCP Protocol",
+      "rel_path": "mcp-server",
+      "abs_path": "codex-rs/mcp-server",
+      "summary": "Exposes Codex itself as a Model Context Protocol server, so other agents can call Codex tools.",
+      "lines": 2527,
+      "file_count": 8,
+      "has_bin": true,
+      "has_lib": true,
+      "deps": [
+        "codex-arg0",
+        "codex-config",
+        "codex-core",
+        "codex-exec-server",
+        "codex-extension-api",
+        "codex-login",
+        "codex-protocol",
+        "codex-shell-command",
+        "codex-utils-absolute-path",
+        "codex-utils-cli",
+        "codex-utils-json-to-toml",
+        "core_test_support",
+        "mcp_test_support"
+      ],
+      "key_files": [
+        "codex-rs/mcp-server/src/message_processor.rs",
+        "codex-rs/mcp-server/src/outgoing_message.rs",
+        "codex-rs/mcp-server/src/codex_tool_config.rs",
+        "codex-rs/mcp-server/src/codex_tool_runner.rs",
+        "codex-rs/mcp-server/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-memories-read",
+      "name": "codex-memories-read",
+      "kind": "rust-crate",
+      "layer": "Extensions",
+      "rel_path": "memories/read",
+      "abs_path": "codex-rs/memories/read",
+      "summary": "Read side of memory storage.",
+      "lines": 229,
+      "file_count": 5,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-protocol",
+        "codex-shell-command",
+        "codex-utils-absolute-path"
+      ],
+      "key_files": [
+        "codex-rs/memories/read/src/citations.rs",
+        "codex-rs/memories/read/src/citations_tests.rs",
+        "codex-rs/memories/read/src/usage.rs",
+        "codex-rs/memories/read/src/lib.rs",
+        "codex-rs/memories/read/src/metrics.rs"
+      ]
+    },
+    {
+      "id": "codex-memories-write",
+      "name": "codex-memories-write",
+      "kind": "rust-crate",
+      "layer": "Extensions",
+      "rel_path": "memories/write",
+      "abs_path": "codex-rs/memories/write",
+      "summary": "Write side of memory storage (allows clearing memory roots).",
+      "lines": 3679,
+      "file_count": 21,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-backend-client",
+        "codex-config",
+        "codex-core",
+        "codex-features",
+        "codex-git-utils",
+        "codex-login",
+        "codex-models-manager",
+        "codex-otel",
+        "codex-protocol",
+        "codex-rollout",
+        "codex-rollout-trace",
+        "codex-secrets",
+        "codex-state",
+        "codex-terminal-detection",
+        "codex-utils-absolute-path",
+        "codex-utils-output-truncation",
+        "codex-utils-template",
+        "core_test_support"
+      ],
+      "key_files": [
+        "codex-rs/memories/write/src/phase1.rs",
+        "codex-rs/memories/write/src/phase2.rs",
+        "codex-rs/memories/write/src/startup_tests.rs",
+        "codex-rs/memories/write/src/runtime.rs",
+        "codex-rs/memories/write/src/storage.rs"
+      ]
+    },
+    {
+      "id": "codex-model-provider-info",
+      "name": "codex-model-provider-info",
+      "kind": "rust-crate",
+      "layer": "Model Providers & Auth",
+      "rel_path": "model-provider-info",
+      "abs_path": "codex-rs/model-provider-info",
+      "summary": "codex-model-provider-info: internal crate, no curated summary.",
+      "lines": 976,
+      "file_count": 2,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-api",
+        "codex-app-server-protocol",
+        "codex-protocol",
+        "codex-utils-absolute-path"
+      ],
+      "key_files": [
+        "codex-rs/model-provider-info/src/lib.rs",
+        "codex-rs/model-provider-info/src/model_provider_info_tests.rs"
+      ]
+    },
+    {
+      "id": "codex-models-manager",
+      "name": "codex-models-manager",
+      "kind": "rust-crate",
+      "layer": "Model Providers & Auth",
+      "rel_path": "models-manager",
+      "abs_path": "codex-rs/models-manager",
+      "summary": "Selects/fetches model metadata, refresh strategy, bundled responses.",
+      "lines": 2023,
+      "file_count": 12,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-app-server-protocol",
+        "codex-collaboration-mode-templates",
+        "codex-login",
+        "codex-otel",
+        "codex-protocol",
+        "codex-utils-output-truncation",
+        "codex-utils-template"
+      ],
+      "key_files": [
+        "codex-rs/models-manager/src/manager_tests.rs",
+        "codex-rs/models-manager/src/manager.rs",
+        "codex-rs/models-manager/src/cache.rs",
+        "codex-rs/models-manager/src/model_info.rs",
+        "codex-rs/models-manager/src/model_info_tests.rs"
+      ]
+    },
+    {
+      "id": "codex-network-proxy",
+      "name": "codex-network-proxy",
+      "kind": "rust-crate",
+      "layer": "Model Providers & Auth",
+      "rel_path": "network-proxy",
+      "abs_path": "codex-rs/network-proxy",
+      "summary": "Network proxy configuration helpers.",
+      "lines": 10898,
+      "file_count": 17,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-utils-absolute-path",
+        "codex-utils-home-dir",
+        "codex-utils-rustls-provider"
+      ],
+      "key_files": [
+        "codex-rs/network-proxy/src/runtime.rs",
+        "codex-rs/network-proxy/src/http_proxy.rs",
+        "codex-rs/network-proxy/src/proxy.rs",
+        "codex-rs/network-proxy/src/mitm_hook.rs",
+        "codex-rs/network-proxy/src/network_policy.rs"
+      ]
+    },
+    {
+      "id": "codex-ollama",
+      "name": "codex-ollama",
+      "kind": "rust-crate",
+      "layer": "Model Providers & Auth",
+      "rel_path": "ollama",
+      "abs_path": "codex-rs/ollama",
+      "summary": "Ollama local-LLM provider.",
+      "lines": 772,
+      "file_count": 5,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-core",
+        "codex-model-provider-info"
+      ],
+      "key_files": [
+        "codex-rs/ollama/src/client.rs",
+        "codex-rs/ollama/src/pull.rs",
+        "codex-rs/ollama/src/lib.rs",
+        "codex-rs/ollama/src/parser.rs",
+        "codex-rs/ollama/src/url.rs"
+      ]
+    },
+    {
+      "id": "codex-process-hardening",
+      "name": "codex-process-hardening",
+      "kind": "rust-crate",
+      "layer": "Execution & Sandboxing",
+      "rel_path": "process-hardening",
+      "abs_path": "codex-rs/process-hardening",
+      "summary": "Pre-main process hardening (resource limits, signal masks).",
+      "lines": 193,
+      "file_count": 1,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [],
+      "key_files": [
+        "codex-rs/process-hardening/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-protocol",
+      "name": "codex-protocol",
+      "kind": "rust-crate",
+      "layer": "Core Orchestration",
+      "rel_path": "protocol",
+      "abs_path": "codex-rs/protocol",
+      "summary": "Canonical wire protocol enums (events, approvals, sandbox policies, session sources). Almost everything depends on it.",
+      "lines": 18201,
+      "file_count": 30,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-async-utils",
+        "codex-execpolicy",
+        "codex-network-proxy",
+        "codex-utils-absolute-path",
+        "codex-utils-image",
+        "codex-utils-string"
+      ],
+      "key_files": [
+        "codex-rs/protocol/src/protocol.rs",
+        "codex-rs/protocol/src/permissions.rs",
+        "codex-rs/protocol/src/models.rs",
+        "codex-rs/protocol/src/openai_models.rs",
+        "codex-rs/protocol/src/config_types.rs"
+      ]
+    },
+    {
+      "id": "codex-realtime-webrtc",
+      "name": "codex-realtime-webrtc",
+      "kind": "rust-crate",
+      "layer": "Model Providers & Auth",
+      "rel_path": "realtime-webrtc",
+      "abs_path": "codex-rs/realtime-webrtc",
+      "summary": "Realtime voice/video transport for the realtime API.",
+      "lines": 317,
+      "file_count": 2,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [],
+      "key_files": [
+        "codex-rs/realtime-webrtc/src/native.rs",
+        "codex-rs/realtime-webrtc/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-rollout",
+      "name": "codex-rollout",
+      "kind": "rust-crate",
+      "layer": "Core Orchestration",
+      "rel_path": "rollout",
+      "abs_path": "codex-rs/rollout",
+      "summary": "Rollout traces; captured input/output sequences used for replay and debugging.",
+      "lines": 9052,
+      "file_count": 15,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-file-search",
+        "codex-git-utils",
+        "codex-login",
+        "codex-otel",
+        "codex-protocol",
+        "codex-state",
+        "codex-utils-path",
+        "codex-utils-string"
+      ],
+      "key_files": [
+        "codex-rs/rollout/src/recorder.rs",
+        "codex-rs/rollout/src/tests.rs",
+        "codex-rs/rollout/src/list.rs",
+        "codex-rs/rollout/src/recorder_tests.rs",
+        "codex-rs/rollout/src/state_db.rs"
+      ]
+    },
+    {
+      "id": "codex-rollout-trace",
+      "name": "codex-rollout-trace",
+      "kind": "rust-crate",
+      "layer": "Core Orchestration",
+      "rel_path": "rollout-trace",
+      "abs_path": "codex-rs/rollout-trace",
+      "summary": "Replay infrastructure for rollouts (REDUCED_STATE_FILE_NAME, replay_bundle).",
+      "lines": 12026,
+      "file_count": 33,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-code-mode",
+        "codex-protocol"
+      ],
+      "key_files": [
+        "codex-rs/rollout-trace/src/reducer/conversation_tests.rs",
+        "codex-rs/rollout-trace/src/reducer/code_cell.rs",
+        "codex-rs/rollout-trace/src/reducer/tool/agents_tests.rs",
+        "codex-rs/rollout-trace/src/reducer/conversation.rs",
+        "codex-rs/rollout-trace/src/reducer/tool/agents.rs"
+      ]
+    },
+    {
+      "id": "codex-rmcp-client",
+      "name": "codex-rmcp-client",
+      "kind": "rust-crate",
+      "layer": "MCP Protocol",
+      "rel_path": "rmcp-client",
+      "abs_path": "codex-rs/rmcp-client",
+      "summary": "Codex's MCP client; connects out to user-configured MCP servers.",
+      "lines": 7049,
+      "file_count": 16,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-api",
+        "codex-client",
+        "codex-config",
+        "codex-exec-server",
+        "codex-keyring-store",
+        "codex-protocol",
+        "codex-utils-cargo-bin",
+        "codex-utils-home-dir",
+        "codex-utils-pty"
+      ],
+      "key_files": [
+        "codex-rs/rmcp-client/src/rmcp_client.rs",
+        "codex-rs/rmcp-client/src/oauth.rs",
+        "codex-rs/rmcp-client/src/perform_oauth_login.rs",
+        "codex-rs/rmcp-client/src/bin/test_stdio_server.rs",
+        "codex-rs/rmcp-client/src/stdio_server_launcher.rs"
+      ]
+    },
+    {
+      "id": "codex-responses-api-proxy",
+      "name": "codex-responses-api-proxy",
+      "kind": "rust-crate",
+      "layer": "Model Providers & Auth",
+      "rel_path": "responses-api-proxy",
+      "abs_path": "codex-rs/responses-api-proxy",
+      "summary": "HTTP proxy in front of the OpenAI Responses API. Ships as both a Rust binary and an npm package.",
+      "lines": 1007,
+      "file_count": 4,
+      "has_bin": true,
+      "has_lib": true,
+      "deps": [
+        "codex-process-hardening"
+      ],
+      "key_files": [
+        "codex-rs/responses-api-proxy/src/dump.rs",
+        "codex-rs/responses-api-proxy/src/read_api_key.rs",
+        "codex-rs/responses-api-proxy/src/lib.rs",
+        "codex-rs/responses-api-proxy/src/main.rs"
+      ]
+    },
+    {
+      "id": "codex-response-debug-context",
+      "name": "codex-response-debug-context",
+      "kind": "rust-crate",
+      "layer": "Core Orchestration",
+      "rel_path": "response-debug-context",
+      "abs_path": "codex-rs/response-debug-context",
+      "summary": "Captures rich context for debugging model responses.",
+      "lines": 166,
+      "file_count": 1,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-api"
+      ],
+      "key_files": [
+        "codex-rs/response-debug-context/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-sandboxing",
+      "name": "codex-sandboxing",
+      "kind": "rust-crate",
+      "layer": "Execution & Sandboxing",
+      "rel_path": "sandboxing",
+      "abs_path": "codex-rs/sandboxing",
+      "summary": "Cross-platform sandbox abstraction.",
+      "lines": 4926,
+      "file_count": 11,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-network-proxy",
+        "codex-protocol",
+        "codex-utils-absolute-path"
+      ],
+      "key_files": [
+        "codex-rs/sandboxing/src/seatbelt_tests.rs",
+        "codex-rs/sandboxing/src/policy_transforms_tests.rs",
+        "codex-rs/sandboxing/src/seatbelt.rs",
+        "codex-rs/sandboxing/src/policy_transforms.rs",
+        "codex-rs/sandboxing/src/manager_tests.rs"
+      ]
+    },
+    {
+      "id": "codex-stdio-to-uds",
+      "name": "codex-stdio-to-uds",
+      "kind": "rust-crate",
+      "layer": "MCP Protocol",
+      "rel_path": "stdio-to-uds",
+      "abs_path": "codex-rs/stdio-to-uds",
+      "summary": "Bridges stdio JSON-RPC to a Unix domain socket (handy for piping MCP clients into a daemon).",
+      "lines": 66,
+      "file_count": 2,
+      "has_bin": true,
+      "has_lib": true,
+      "deps": [
+        "codex-uds",
+        "codex-utils-cargo-bin"
+      ],
+      "key_files": [
+        "codex-rs/stdio-to-uds/src/lib.rs",
+        "codex-rs/stdio-to-uds/src/main.rs"
+      ]
+    },
+    {
+      "id": "codex-otel",
+      "name": "codex-otel",
+      "kind": "rust-crate",
+      "layer": "Observability / Telemetry",
+      "rel_path": "otel",
+      "abs_path": "codex-rs/otel",
+      "summary": "OpenTelemetry exporter.",
+      "lines": 3779,
+      "file_count": 19,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-api",
+        "codex-app-server-protocol",
+        "codex-protocol",
+        "codex-utils-absolute-path",
+        "codex-utils-string"
+      ],
+      "key_files": [
+        "codex-rs/otel/src/events/session_telemetry.rs",
+        "codex-rs/otel/src/provider.rs",
+        "codex-rs/otel/src/metrics/client.rs",
+        "codex-rs/otel/src/trace_context.rs",
+        "codex-rs/otel/src/otlp.rs"
+      ]
+    },
+    {
+      "id": "codex-tui",
+      "name": "codex-tui",
+      "kind": "rust-crate",
+      "layer": "Presentation (CLI/TUI)",
+      "rel_path": "tui",
+      "abs_path": "codex-rs/tui",
+      "summary": "ratatui-based interactive terminal UI. Largest crate by LoC (~194k); owns the chat composer, bottom pane, slash commands, themes, snapshot tests.",
+      "lines": 193863,
+      "file_count": 320,
+      "has_bin": true,
+      "has_lib": true,
+      "deps": [
+        "codex-ansi-escape",
+        "codex-app-server-client",
+        "codex-app-server-protocol",
+        "codex-arg0",
+        "codex-chatgpt",
+        "codex-cli",
+        "codex-cloud-requirements",
+        "codex-config",
+        "codex-connectors",
+        "codex-core-plugins",
+        "codex-core-skills",
+        "codex-exec-server",
+        "codex-features",
+        "codex-feedback",
+        "codex-file-search",
+        "codex-git-utils",
+        "codex-install-context",
+        "codex-login",
+        "codex-mcp",
+        "codex-message-history",
+        "codex-model-provider",
+        "codex-model-provider-info",
+        "codex-models-manager",
+        "codex-otel",
+        "codex-plugin",
+        "codex-protocol",
+        "codex-realtime-webrtc",
+        "codex-rollout",
+        "codex-sandboxing",
+        "codex-shell-command",
+        "codex-state",
+        "codex-terminal-detection",
+        "codex-utils-absolute-path",
+        "codex-utils-approval-presets",
+        "codex-utils-cargo-bin",
+        "codex-utils-cli",
+        "codex-utils-elapsed",
+        "codex-utils-fuzzy-match",
+        "codex-utils-home-dir",
+        "codex-utils-oss",
+        "codex-utils-path",
+        "codex-utils-plugins",
+        "codex-utils-sandbox-summary",
+        "codex-utils-sleep-inhibitor",
+        "codex-utils-string",
+        "codex-windows-sandbox",
+        "core_test_support"
+      ],
+      "key_files": [
+        "codex-rs/tui/src/bottom_pane/chat_composer.rs",
+        "codex-rs/tui/src/app/tests.rs",
+        "codex-rs/tui/src/app_server_session.rs",
+        "codex-rs/tui/src/bottom_pane/approval_overlay.rs",
+        "codex-rs/tui/src/app/event_dispatch.rs"
+      ]
+    },
+    {
+      "id": "codex-tools",
+      "name": "codex-tools",
+      "kind": "rust-crate",
+      "layer": "Core Orchestration",
+      "rel_path": "tools",
+      "abs_path": "codex-rs/tools",
+      "summary": "Registry of built-in tools available to the agent (read, write, exec, etc.).",
+      "lines": 5355,
+      "file_count": 28,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-app-server-protocol",
+        "codex-code-mode",
+        "codex-features",
+        "codex-protocol",
+        "codex-utils-absolute-path",
+        "codex-utils-cargo-bin",
+        "codex-utils-output-truncation",
+        "codex-utils-pty",
+        "codex-utils-string"
+      ],
+      "key_files": [
+        "codex-rs/tools/src/json_schema_tests.rs",
+        "codex-rs/tools/src/json_schema.rs",
+        "codex-rs/tools/src/tool_spec_tests.rs",
+        "codex-rs/tools/src/tool_output.rs",
+        "codex-rs/tools/src/request_plugin_install_tests.rs"
+      ]
+    },
+    {
+      "id": "codex-v8-poc",
+      "name": "codex-v8-poc",
+      "kind": "rust-crate",
+      "layer": "Cloud / Agents",
+      "rel_path": "v8-poc",
+      "abs_path": "codex-rs/v8-poc",
+      "summary": "V8/JS runtime proof-of-concept (experimental).",
+      "lines": 92,
+      "file_count": 1,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [],
+      "key_files": [
+        "codex-rs/v8-poc/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-utils-absolute-path",
+      "name": "codex-utils-absolute-path",
+      "kind": "rust-crate",
+      "layer": "Utils",
+      "rel_path": "utils/absolute-path",
+      "abs_path": "codex-rs/utils/absolute-path",
+      "summary": "Leaf utility crate (utils-absolute-path).",
+      "lines": 871,
+      "file_count": 2,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [],
+      "key_files": [
+        "codex-rs/utils/absolute-path/src/lib.rs",
+        "codex-rs/utils/absolute-path/src/absolutize.rs"
+      ]
+    },
+    {
+      "id": "codex-utils-cargo-bin",
+      "name": "codex-utils-cargo-bin",
+      "kind": "rust-crate",
+      "layer": "Utils",
+      "rel_path": "utils/cargo-bin",
+      "abs_path": "codex-rs/utils/cargo-bin",
+      "summary": "Leaf utility crate (utils-cargo-bin).",
+      "lines": 231,
+      "file_count": 1,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [],
+      "key_files": [
+        "codex-rs/utils/cargo-bin/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-git-utils",
+      "name": "codex-git-utils",
+      "kind": "rust-crate",
+      "layer": "Filesystem / Config",
+      "rel_path": "git-utils",
+      "abs_path": "codex-rs/git-utils",
+      "summary": "git CLI wrapper used everywhere.",
+      "lines": 3012,
+      "file_count": 8,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-file-system",
+        "codex-protocol",
+        "codex-utils-absolute-path"
+      ],
+      "key_files": [
+        "codex-rs/git-utils/src/info.rs",
+        "codex-rs/git-utils/src/apply.rs",
+        "codex-rs/git-utils/src/baseline.rs",
+        "codex-rs/git-utils/src/branch.rs",
+        "codex-rs/git-utils/src/operations.rs"
+      ]
+    },
+    {
+      "id": "codex-utils-cache",
+      "name": "codex-utils-cache",
+      "kind": "rust-crate",
+      "layer": "Utils",
+      "rel_path": "utils/cache",
+      "abs_path": "codex-rs/utils/cache",
+      "summary": "Leaf utility crate (utils-cache).",
+      "lines": 193,
+      "file_count": 1,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [],
+      "key_files": [
+        "codex-rs/utils/cache/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-utils-image",
+      "name": "codex-utils-image",
+      "kind": "rust-crate",
+      "layer": "Utils",
+      "rel_path": "utils/image",
+      "abs_path": "codex-rs/utils/image",
+      "summary": "Leaf utility crate (utils-image).",
+      "lines": 404,
+      "file_count": 2,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-utils-cache"
+      ],
+      "key_files": [
+        "codex-rs/utils/image/src/lib.rs",
+        "codex-rs/utils/image/src/error.rs"
+      ]
+    },
+    {
+      "id": "codex-utils-json-to-toml",
+      "name": "codex-utils-json-to-toml",
+      "kind": "rust-crate",
+      "layer": "Utils",
+      "rel_path": "utils/json-to-toml",
+      "abs_path": "codex-rs/utils/json-to-toml",
+      "summary": "Leaf utility crate (utils-json-to-toml).",
+      "lines": 83,
+      "file_count": 1,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [],
+      "key_files": [
+        "codex-rs/utils/json-to-toml/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-utils-home-dir",
+      "name": "codex-utils-home-dir",
+      "kind": "rust-crate",
+      "layer": "Utils",
+      "rel_path": "utils/home-dir",
+      "abs_path": "codex-rs/utils/home-dir",
+      "summary": "Leaf utility crate (utils-home-dir).",
+      "lines": 134,
+      "file_count": 1,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-utils-absolute-path"
+      ],
+      "key_files": [
+        "codex-rs/utils/home-dir/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-utils-pty",
+      "name": "codex-utils-pty",
+      "kind": "rust-crate",
+      "layer": "Utils",
+      "rel_path": "utils/pty",
+      "abs_path": "codex-rs/utils/pty",
+      "summary": "Leaf utility crate (utils-pty).",
+      "lines": 3339,
+      "file_count": 10,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [],
+      "key_files": [
+        "codex-rs/utils/pty/src/tests.rs",
+        "codex-rs/utils/pty/src/pty.rs",
+        "codex-rs/utils/pty/src/process.rs",
+        "codex-rs/utils/pty/src/win/psuedocon.rs",
+        "codex-rs/utils/pty/src/pipe.rs"
+      ]
+    },
+    {
+      "id": "codex-utils-readiness",
+      "name": "codex-utils-readiness",
+      "kind": "rust-crate",
+      "layer": "Utils",
+      "rel_path": "utils/readiness",
+      "abs_path": "codex-rs/utils/readiness",
+      "summary": "Leaf utility crate (utils-readiness).",
+      "lines": 333,
+      "file_count": 1,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [],
+      "key_files": [
+        "codex-rs/utils/readiness/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-utils-rustls-provider",
+      "name": "codex-utils-rustls-provider",
+      "kind": "rust-crate",
+      "layer": "Utils",
+      "rel_path": "utils/rustls-provider",
+      "abs_path": "codex-rs/utils/rustls-provider",
+      "summary": "Leaf utility crate (utils-rustls-provider).",
+      "lines": 12,
+      "file_count": 1,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [],
+      "key_files": [
+        "codex-rs/utils/rustls-provider/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-utils-string",
+      "name": "codex-utils-string",
+      "kind": "rust-crate",
+      "layer": "Utils",
+      "rel_path": "utils/string",
+      "abs_path": "codex-rs/utils/string",
+      "summary": "Leaf utility crate (utils-string).",
+      "lines": 560,
+      "file_count": 4,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [],
+      "key_files": [
+        "codex-rs/utils/string/src/lib.rs",
+        "codex-rs/utils/string/src/truncate.rs",
+        "codex-rs/utils/string/src/json.rs",
+        "codex-rs/utils/string/src/truncate/tests.rs"
+      ]
+    },
+    {
+      "id": "codex-utils-cli",
+      "name": "codex-utils-cli",
+      "kind": "rust-crate",
+      "layer": "Utils",
+      "rel_path": "utils/cli",
+      "abs_path": "codex-rs/utils/cli",
+      "summary": "Leaf utility crate (utils-cli).",
+      "lines": 677,
+      "file_count": 7,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-protocol",
+        "codex-shell-command"
+      ],
+      "key_files": [
+        "codex-rs/utils/cli/src/config_override.rs",
+        "codex-rs/utils/cli/src/shared_options.rs",
+        "codex-rs/utils/cli/src/resume_command.rs",
+        "codex-rs/utils/cli/src/format_env_display.rs",
+        "codex-rs/utils/cli/src/sandbox_mode_cli_arg.rs"
+      ]
+    },
+    {
+      "id": "codex-utils-elapsed",
+      "name": "codex-utils-elapsed",
+      "kind": "rust-crate",
+      "layer": "Utils",
+      "rel_path": "utils/elapsed",
+      "abs_path": "codex-rs/utils/elapsed",
+      "summary": "Leaf utility crate (utils-elapsed).",
+      "lines": 71,
+      "file_count": 1,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [],
+      "key_files": [
+        "codex-rs/utils/elapsed/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-utils-sandbox-summary",
+      "name": "codex-utils-sandbox-summary",
+      "kind": "rust-crate",
+      "layer": "Utils",
+      "rel_path": "utils/sandbox-summary",
+      "abs_path": "codex-rs/utils/sandbox-summary",
+      "summary": "Leaf utility crate (utils-sandbox-summary).",
+      "lines": 231,
+      "file_count": 3,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-core",
+        "codex-model-provider-info",
+        "codex-protocol",
+        "codex-utils-absolute-path"
+      ],
+      "key_files": [
+        "codex-rs/utils/sandbox-summary/src/sandbox_summary.rs",
+        "codex-rs/utils/sandbox-summary/src/config_summary.rs",
+        "codex-rs/utils/sandbox-summary/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-utils-sleep-inhibitor",
+      "name": "codex-utils-sleep-inhibitor",
+      "kind": "rust-crate",
+      "layer": "Utils",
+      "rel_path": "utils/sleep-inhibitor",
+      "abs_path": "codex-rs/utils/sleep-inhibitor",
+      "summary": "Leaf utility crate (utils-sleep-inhibitor).",
+      "lines": 618,
+      "file_count": 6,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [],
+      "key_files": [
+        "codex-rs/utils/sleep-inhibitor/src/linux_inhibitor.rs",
+        "codex-rs/utils/sleep-inhibitor/src/windows_inhibitor.rs",
+        "codex-rs/utils/sleep-inhibitor/src/lib.rs",
+        "codex-rs/utils/sleep-inhibitor/src/macos.rs",
+        "codex-rs/utils/sleep-inhibitor/src/iokit_bindings.rs"
+      ]
+    },
+    {
+      "id": "codex-utils-approval-presets",
+      "name": "codex-utils-approval-presets",
+      "kind": "rust-crate",
+      "layer": "Utils",
+      "rel_path": "utils/approval-presets",
+      "abs_path": "codex-rs/utils/approval-presets",
+      "summary": "Leaf utility crate (utils-approval-presets).",
+      "lines": 77,
+      "file_count": 1,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-protocol"
+      ],
+      "key_files": [
+        "codex-rs/utils/approval-presets/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-utils-oss",
+      "name": "codex-utils-oss",
+      "kind": "rust-crate",
+      "layer": "Utils",
+      "rel_path": "utils/oss",
+      "abs_path": "codex-rs/utils/oss",
+      "summary": "Leaf utility crate (utils-oss).",
+      "lines": 61,
+      "file_count": 1,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-core",
+        "codex-lmstudio",
+        "codex-model-provider-info",
+        "codex-ollama"
+      ],
+      "key_files": [
+        "codex-rs/utils/oss/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-utils-output-truncation",
+      "name": "codex-utils-output-truncation",
+      "kind": "rust-crate",
+      "layer": "Utils",
+      "rel_path": "utils/output-truncation",
+      "abs_path": "codex-rs/utils/output-truncation",
+      "summary": "Leaf utility crate (utils-output-truncation).",
+      "lines": 489,
+      "file_count": 2,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-protocol",
+        "codex-utils-string"
+      ],
+      "key_files": [
+        "codex-rs/utils/output-truncation/src/truncate_tests.rs",
+        "codex-rs/utils/output-truncation/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-utils-path",
+      "name": "codex-utils-path",
+      "kind": "rust-crate",
+      "layer": "Utils",
+      "rel_path": "utils/path-utils",
+      "abs_path": "codex-rs/utils/path-utils",
+      "summary": "Leaf utility crate (utils-path).",
+      "lines": 353,
+      "file_count": 3,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-utils-absolute-path"
+      ],
+      "key_files": [
+        "codex-rs/utils/path-utils/src/lib.rs",
+        "codex-rs/utils/path-utils/src/path_utils_tests.rs",
+        "codex-rs/utils/path-utils/src/env.rs"
+      ]
+    },
+    {
+      "id": "codex-utils-plugins",
+      "name": "codex-utils-plugins",
+      "kind": "rust-crate",
+      "layer": "Plugins / Skills / Hooks",
+      "rel_path": "utils/plugins",
+      "abs_path": "codex-rs/utils/plugins",
+      "summary": "Leaf utility crate (utils-plugins).",
+      "lines": 194,
+      "file_count": 4,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-exec-server",
+        "codex-login",
+        "codex-utils-absolute-path"
+      ],
+      "key_files": [
+        "codex-rs/utils/plugins/src/plugin_namespace.rs",
+        "codex-rs/utils/plugins/src/mcp_connector.rs",
+        "codex-rs/utils/plugins/src/lib.rs",
+        "codex-rs/utils/plugins/src/mention_syntax.rs"
+      ]
+    },
+    {
+      "id": "codex-utils-fuzzy-match",
+      "name": "codex-utils-fuzzy-match",
+      "kind": "rust-crate",
+      "layer": "Utils",
+      "rel_path": "utils/fuzzy-match",
+      "abs_path": "codex-rs/utils/fuzzy-match",
+      "summary": "Leaf utility crate (utils-fuzzy-match).",
+      "lines": 168,
+      "file_count": 1,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [],
+      "key_files": [
+        "codex-rs/utils/fuzzy-match/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-utils-stream-parser",
+      "name": "codex-utils-stream-parser",
+      "kind": "rust-crate",
+      "layer": "Utils",
+      "rel_path": "utils/stream-parser",
+      "abs_path": "codex-rs/utils/stream-parser",
+      "summary": "Leaf utility crate (utils-stream-parser).",
+      "lines": 1485,
+      "file_count": 8,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [],
+      "key_files": [
+        "codex-rs/utils/stream-parser/src/utf8_stream.rs",
+        "codex-rs/utils/stream-parser/src/inline_hidden_tag.rs",
+        "codex-rs/utils/stream-parser/src/tagged_line_parser.rs",
+        "codex-rs/utils/stream-parser/src/proposed_plan.rs",
+        "codex-rs/utils/stream-parser/src/citation.rs"
+      ]
+    },
+    {
+      "id": "codex-utils-template",
+      "name": "codex-utils-template",
+      "kind": "rust-crate",
+      "layer": "Utils",
+      "rel_path": "utils/template",
+      "abs_path": "codex-rs/utils/template",
+      "summary": "Leaf utility crate (utils-template).",
+      "lines": 442,
+      "file_count": 1,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [],
+      "key_files": [
+        "codex-rs/utils/template/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-client",
+      "name": "codex-client",
+      "kind": "rust-crate",
+      "layer": "Model Providers & Auth",
+      "rel_path": "codex-client",
+      "abs_path": "codex-rs/codex-client",
+      "summary": "codex-client: internal crate, no curated summary.",
+      "lines": 1996,
+      "file_count": 12,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-utils-cargo-bin",
+        "codex-utils-rustls-provider"
+      ],
+      "key_files": [
+        "codex-rs/codex-client/src/custom_ca.rs",
+        "codex-rs/codex-client/src/chatgpt_cloudflare_cookies.rs",
+        "codex-rs/codex-client/src/default_client.rs",
+        "codex-rs/codex-client/src/request.rs",
+        "codex-rs/codex-client/src/transport.rs"
+      ]
+    },
+    {
+      "id": "codex-api",
+      "name": "codex-api",
+      "kind": "rust-crate",
+      "layer": "Model Providers & Auth",
+      "rel_path": "codex-api",
+      "abs_path": "codex-rs/codex-api",
+      "summary": "codex-api: internal crate, no curated summary.",
+      "lines": 10137,
+      "file_count": 36,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-client",
+        "codex-protocol",
+        "codex-utils-rustls-provider"
+      ],
+      "key_files": [
+        "codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs",
+        "codex-rs/codex-api/src/sse/responses.rs",
+        "codex-rs/codex-api/src/endpoint/responses_websocket.rs",
+        "codex-rs/codex-api/src/endpoint/realtime_call.rs",
+        "codex-rs/codex-api/src/files.rs"
+      ]
+    },
+    {
+      "id": "codex-state",
+      "name": "codex-state",
+      "kind": "rust-crate",
+      "layer": "Core Orchestration",
+      "rel_path": "state",
+      "abs_path": "codex-rs/state",
+      "summary": "On-disk state DB for sessions/threads. Recoverable via codex-cli state-db-recovery.",
+      "lines": 15480,
+      "file_count": 25,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-git-utils",
+        "codex-protocol"
+      ],
+      "key_files": [
+        "codex-rs/state/src/runtime/memories.rs",
+        "codex-rs/state/src/runtime/threads.rs",
+        "codex-rs/state/src/runtime/logs.rs",
+        "codex-rs/state/src/runtime/goals.rs",
+        "codex-rs/state/src/log_db.rs"
+      ]
+    },
+    {
+      "id": "codex-terminal-detection",
+      "name": "codex-terminal-detection",
+      "kind": "rust-crate",
+      "layer": "Observability / Telemetry",
+      "rel_path": "terminal-detection",
+      "abs_path": "codex-rs/terminal-detection",
+      "summary": "Detects terminal capabilities (truecolor, hyperlinks).",
+      "lines": 1495,
+      "file_count": 2,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [],
+      "key_files": [
+        "codex-rs/terminal-detection/src/terminal_tests.rs",
+        "codex-rs/terminal-detection/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-test-binary-support",
+      "name": "codex-test-binary-support",
+      "kind": "rust-crate",
+      "layer": "Observability / Telemetry",
+      "rel_path": "test-binary-support",
+      "abs_path": "codex-rs/test-binary-support",
+      "summary": "codex-test-binary-support: internal crate, no curated summary.",
+      "lines": 0,
+      "file_count": 0,
+      "has_bin": false,
+      "has_lib": false,
+      "deps": [
+        "codex-arg0"
+      ],
+      "key_files": []
+    },
+    {
+      "id": "codex-thread-manager-sample",
+      "name": "codex-thread-manager-sample",
+      "kind": "rust-crate",
+      "layer": "Core Orchestration",
+      "rel_path": "thread-manager-sample",
+      "abs_path": "codex-rs/thread-manager-sample",
+      "summary": "Sample thread-manager binary (reference impl).",
+      "lines": 385,
+      "file_count": 1,
+      "has_bin": true,
+      "has_lib": false,
+      "deps": [
+        "codex-core-api"
+      ],
+      "key_files": [
+        "codex-rs/thread-manager-sample/src/main.rs"
+      ]
+    },
+    {
+      "id": "codex-thread-store",
+      "name": "codex-thread-store",
+      "kind": "rust-crate",
+      "layer": "Core Orchestration",
+      "rel_path": "thread-store",
+      "abs_path": "codex-rs/thread-store",
+      "summary": "Persists individual thread/conversation objects.",
+      "lines": 7693,
+      "file_count": 18,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-git-utils",
+        "codex-install-context",
+        "codex-protocol",
+        "codex-rollout",
+        "codex-state",
+        "codex-utils-path"
+      ],
+      "key_files": [
+        "codex-rs/thread-store/src/local/update_thread_metadata.rs",
+        "codex-rs/thread-store/src/local/read_thread.rs",
+        "codex-rs/thread-store/src/local/mod.rs",
+        "codex-rs/thread-store/src/types.rs",
+        "codex-rs/thread-store/src/thread_metadata_sync.rs"
+      ]
+    },
+    {
+      "id": "codex-uds",
+      "name": "codex-uds",
+      "kind": "rust-crate",
+      "layer": "MCP Protocol",
+      "rel_path": "uds",
+      "abs_path": "codex-rs/uds",
+      "summary": "Unix domain socket utilities.",
+      "lines": 452,
+      "file_count": 2,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [],
+      "key_files": [
+        "codex-rs/uds/src/lib.rs",
+        "codex-rs/uds/src/lib_tests.rs"
+      ]
+    },
+    {
+      "id": "codex-experimental-api-macros",
+      "name": "codex-experimental-api-macros",
+      "kind": "rust-crate",
+      "layer": "Core Orchestration",
+      "rel_path": "codex-experimental-api-macros",
+      "abs_path": "codex-rs/codex-experimental-api-macros",
+      "summary": "codex-experimental-api-macros: internal crate, no curated summary.",
+      "lines": 310,
+      "file_count": 1,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [],
+      "key_files": [
+        "codex-rs/codex-experimental-api-macros/src/lib.rs"
+      ]
+    },
+    {
+      "id": "codex-plugin",
+      "name": "codex-plugin",
+      "kind": "rust-crate",
+      "layer": "Plugins / Skills / Hooks",
+      "rel_path": "plugin",
+      "abs_path": "codex-rs/plugin",
+      "summary": "Plugin manifest + lifecycle.",
+      "lines": 388,
+      "file_count": 3,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-config",
+        "codex-utils-absolute-path",
+        "codex-utils-plugins"
+      ],
+      "key_files": [
+        "codex-rs/plugin/src/load_outcome.rs",
+        "codex-rs/plugin/src/lib.rs",
+        "codex-rs/plugin/src/plugin_id.rs"
+      ]
+    },
+    {
+      "id": "codex-model-provider",
+      "name": "codex-model-provider",
+      "kind": "rust-crate",
+      "layer": "Model Providers & Auth",
+      "rel_path": "model-provider",
+      "abs_path": "codex-rs/model-provider",
+      "summary": "Abstraction over LLM backends.",
+      "lines": 1785,
+      "file_count": 9,
+      "has_bin": false,
+      "has_lib": true,
+      "deps": [
+        "codex-agent-identity",
+        "codex-api",
+        "codex-aws-auth",
+        "codex-client",
+        "codex-feedback",
+        "codex-login",
+        "codex-model-provider-info",
+        "codex-models-manager",
+        "codex-otel",
+        "codex-protocol",
+        "codex-response-debug-context"
+      ],
+      "key_files": [
+        "codex-rs/model-provider/src/provider.rs",
+        "codex-rs/model-provider/src/models_endpoint.rs",
+        "codex-rs/model-provider/src/amazon_bedrock/auth.rs",
+        "codex-rs/model-provider/src/amazon_bedrock/catalog.rs",
+        "codex-rs/model-provider/src/amazon_bedrock/mod.rs"
+      ]
+    },
+    {
+      "id": "npm:codex-cli",
+      "name": "@openai/codex",
+      "kind": "npm-package",
+      "layer": "Presentation (CLI/TUI)",
+      "rel_path": "codex-cli",
+      "summary": "npm wrapper that downloads the platform-specific codex binary and re-exports it as a node bin. End users install via npm i -g @openai/codex.",
+      "files": [],
+      "file_count": 0,
+      "lines": 0,
+      "deps": [],
+      "has_bin": true,
+      "has_lib": false,
+      "key_files": []
+    },
+    {
+      "id": "npm:sdk-typescript",
+      "name": "@openai/codex-sdk",
+      "kind": "npm-package",
+      "layer": "App Server (IPC)",
+      "rel_path": "sdk/typescript",
+      "summary": "TypeScript SDK that speaks the codex-app-server-protocol over stdio/IPC. Used by external apps to embed Codex.",
+      "files": [],
+      "file_count": 0,
+      "lines": 0,
+      "deps": [
+        "codex-app-server-protocol"
+      ],
+      "has_bin": false,
+      "has_lib": true,
+      "key_files": []
+    },
+    {
+      "id": "py:sdk-python",
+      "name": "openai-codex",
+      "kind": "python-package",
+      "layer": "App Server (IPC)",
+      "rel_path": "sdk/python",
+      "summary": "Python SDK that speaks the codex-app-server-protocol. Includes a separate python-runtime companion crate path under sdk/.",
+      "files": [],
+      "file_count": 0,
+      "lines": 0,
+      "deps": [
+        "codex-app-server-protocol"
+      ],
+      "has_bin": false,
+      "has_lib": true,
+      "key_files": []
+    }
+  ],
+  "relationships": [
+    {
+      "source": "codex-analytics",
+      "target": "codex-app-server-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-analytics",
+      "target": "codex-git-utils",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-analytics",
+      "target": "codex-login",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-analytics",
+      "target": "codex-model-provider",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-analytics",
+      "target": "codex-plugin",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-analytics",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-analytics",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-agent-graph-store",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-agent-graph-store",
+      "target": "codex-state",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-agent-identity",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-backend-client",
+      "target": "codex-api",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-backend-client",
+      "target": "codex-client",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-backend-client",
+      "target": "codex-login",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-backend-client",
+      "target": "codex-model-provider",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-backend-client",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-analytics",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-app-server-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-app-server-transport",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-arg0",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-backend-client",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-cloud-requirements",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-config",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-core",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-core-plugins",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-exec-server",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-extension-api",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-external-agent-migration",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-external-agent-sessions",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-features",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-feedback",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-file-search",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-file-watcher",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-git-utils",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-guardian",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-hooks",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-login",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-mcp",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-memories-extension",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-memories-write",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-model-provider",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-model-provider-info",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-models-manager",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-otel",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-plugin",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-rmcp-client",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-rollout",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-sandboxing",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-shell-command",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-state",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-thread-store",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-tools",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-utils-cargo-bin",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-utils-cli",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-utils-json-to-toml",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server",
+      "target": "codex-utils-pty",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-transport",
+      "target": "codex-api",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-transport",
+      "target": "codex-app-server-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-transport",
+      "target": "codex-config",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-transport",
+      "target": "codex-core",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-transport",
+      "target": "codex-login",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-transport",
+      "target": "codex-model-provider",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-transport",
+      "target": "codex-state",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-transport",
+      "target": "codex-uds",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-transport",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-transport",
+      "target": "codex-utils-rustls-provider",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-daemon",
+      "target": "codex-app-server-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-daemon",
+      "target": "codex-app-server-transport",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-daemon",
+      "target": "codex-uds",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-daemon",
+      "target": "codex-utils-home-dir",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-client",
+      "target": "codex-app-server",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-client",
+      "target": "codex-app-server-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-client",
+      "target": "codex-arg0",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-client",
+      "target": "codex-config",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-client",
+      "target": "codex-core",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-client",
+      "target": "codex-exec-server",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-client",
+      "target": "codex-feedback",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-client",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-client",
+      "target": "codex-uds",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-client",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-client",
+      "target": "codex-utils-rustls-provider",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-protocol",
+      "target": "codex-experimental-api-macros",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-protocol",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-protocol",
+      "target": "codex-shell-command",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-protocol",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-protocol",
+      "target": "codex-utils-cargo-bin",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-test-client",
+      "target": "codex-app-server-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-test-client",
+      "target": "codex-core",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-test-client",
+      "target": "codex-otel",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-test-client",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-app-server-test-client",
+      "target": "codex-utils-cli",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-apply-patch",
+      "target": "codex-exec-server",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-apply-patch",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-apply-patch",
+      "target": "codex-utils-cargo-bin",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-arg0",
+      "target": "codex-apply-patch",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-arg0",
+      "target": "codex-exec-server",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-arg0",
+      "target": "codex-linux-sandbox",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-arg0",
+      "target": "codex-sandboxing",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-arg0",
+      "target": "codex-shell-escalation",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-arg0",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-arg0",
+      "target": "codex-utils-home-dir",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-feedback",
+      "target": "codex-login",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-feedback",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-features",
+      "target": "codex-otel",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-features",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-install-context",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-install-context",
+      "target": "codex-utils-home-dir",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-code-mode",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cloud-requirements",
+      "target": "codex-backend-client",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cloud-requirements",
+      "target": "codex-config",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cloud-requirements",
+      "target": "codex-core",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cloud-requirements",
+      "target": "codex-login",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cloud-requirements",
+      "target": "codex-otel",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cloud-requirements",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cloud-requirements",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cloud-tasks",
+      "target": "codex-client",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cloud-tasks",
+      "target": "codex-cloud-tasks-client",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cloud-tasks",
+      "target": "codex-cloud-tasks-mock-client",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cloud-tasks",
+      "target": "codex-core",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cloud-tasks",
+      "target": "codex-git-utils",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cloud-tasks",
+      "target": "codex-model-provider",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cloud-tasks",
+      "target": "codex-tui",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cloud-tasks",
+      "target": "codex-utils-cli",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cloud-tasks-client",
+      "target": "codex-api",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cloud-tasks-client",
+      "target": "codex-backend-client",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cloud-tasks-client",
+      "target": "codex-git-utils",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cloud-tasks-mock-client",
+      "target": "codex-cloud-tasks-client",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-api",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-app-server",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-app-server-daemon",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-app-server-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-app-server-test-client",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-arg0",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-config",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-core",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-core-plugins",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-exec",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-exec-server",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-execpolicy",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-features",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-git-utils",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-install-context",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-login",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-mcp",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-mcp-server",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-memories-write",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-model-provider",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-models-manager",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-plugin",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-responses-api-proxy",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-rmcp-client",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-rollout",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-rollout-trace",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-sandboxing",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-state",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-stdio-to-uds",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-terminal-detection",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-tui",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-utils-cargo-bin",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-utils-cli",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-cli",
+      "target": "codex-utils-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-connectors",
+      "target": "codex-app-server-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-config",
+      "target": "codex-app-server-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-config",
+      "target": "codex-execpolicy",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-config",
+      "target": "codex-features",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-config",
+      "target": "codex-file-system",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-config",
+      "target": "codex-git-utils",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-config",
+      "target": "codex-model-provider-info",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-config",
+      "target": "codex-network-proxy",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-config",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-config",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-config",
+      "target": "codex-utils-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-shell-command",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-shell-command",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-shell-escalation",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-shell-escalation",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-skills",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-analytics",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-api",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-app-server-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-apply-patch",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-async-utils",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-code-mode",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-config",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-connectors",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-core-plugins",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-core-skills",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-exec-server",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-execpolicy",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-extension-api",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-features",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-feedback",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-git-utils",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-hooks",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-install-context",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-login",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-mcp",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-memories-read",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-model-provider",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-model-provider-info",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-models-manager",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-network-proxy",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-otel",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-plugin",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-response-debug-context",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-rmcp-client",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-rollout",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-rollout-trace",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-sandboxing",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-shell-command",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-shell-escalation",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-state",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-terminal-detection",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-test-binary-support",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-thread-store",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-tools",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-utils-cache",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-utils-cargo-bin",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-utils-home-dir",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-utils-image",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-utils-output-truncation",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-utils-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-utils-plugins",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-utils-pty",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-utils-stream-parser",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-utils-string",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core",
+      "target": "codex-utils-template",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-api",
+      "target": "codex-analytics",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-api",
+      "target": "codex-app-server-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-api",
+      "target": "codex-arg0",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-api",
+      "target": "codex-config",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-api",
+      "target": "codex-core",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-api",
+      "target": "codex-exec-server",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-api",
+      "target": "codex-extension-api",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-api",
+      "target": "codex-features",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-api",
+      "target": "codex-login",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-api",
+      "target": "codex-model-provider-info",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-api",
+      "target": "codex-models-manager",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-api",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-api",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-plugins",
+      "target": "codex-analytics",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-plugins",
+      "target": "codex-app-server-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-plugins",
+      "target": "codex-config",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-plugins",
+      "target": "codex-core-skills",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-plugins",
+      "target": "codex-exec-server",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-plugins",
+      "target": "codex-git-utils",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-plugins",
+      "target": "codex-hooks",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-plugins",
+      "target": "codex-login",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-plugins",
+      "target": "codex-model-provider",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-plugins",
+      "target": "codex-otel",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-plugins",
+      "target": "codex-plugin",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-plugins",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-plugins",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-plugins",
+      "target": "codex-utils-plugins",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-skills",
+      "target": "codex-analytics",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-skills",
+      "target": "codex-app-server-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-skills",
+      "target": "codex-config",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-skills",
+      "target": "codex-exec-server",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-skills",
+      "target": "codex-login",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-skills",
+      "target": "codex-model-provider",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-skills",
+      "target": "codex-otel",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-skills",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-skills",
+      "target": "codex-skills",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-skills",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-skills",
+      "target": "codex-utils-output-truncation",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-core-skills",
+      "target": "codex-utils-plugins",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-hooks",
+      "target": "codex-config",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-hooks",
+      "target": "codex-plugin",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-hooks",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-hooks",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-hooks",
+      "target": "codex-utils-output-truncation",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-secrets",
+      "target": "codex-git-utils",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-secrets",
+      "target": "codex-keyring-store",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-exec",
+      "target": "codex-app-server-client",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-exec",
+      "target": "codex-app-server-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-exec",
+      "target": "codex-apply-patch",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-exec",
+      "target": "codex-arg0",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-exec",
+      "target": "codex-cloud-requirements",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-exec",
+      "target": "codex-config",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-exec",
+      "target": "codex-core",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-exec",
+      "target": "codex-feedback",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-exec",
+      "target": "codex-git-utils",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-exec",
+      "target": "codex-login",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-exec",
+      "target": "codex-model-provider-info",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-exec",
+      "target": "codex-otel",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-exec",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-exec",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-exec",
+      "target": "codex-utils-cargo-bin",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-exec",
+      "target": "codex-utils-cli",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-exec",
+      "target": "codex-utils-oss",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-exec",
+      "target": "codex-utils-sandbox-summary",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-file-system",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-file-system",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-exec-server",
+      "target": "codex-api",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-exec-server",
+      "target": "codex-app-server-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-exec-server",
+      "target": "codex-client",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-exec-server",
+      "target": "codex-file-system",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-exec-server",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-exec-server",
+      "target": "codex-sandboxing",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-exec-server",
+      "target": "codex-test-binary-support",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-exec-server",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-exec-server",
+      "target": "codex-utils-pty",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-exec-server",
+      "target": "codex-utils-rustls-provider",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-execpolicy",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-extension-api",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-extension-api",
+      "target": "codex-tools",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-goal-extension",
+      "target": "codex-core",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-goal-extension",
+      "target": "codex-extension-api",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-goal-extension",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-goal-extension",
+      "target": "codex-state",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-goal-extension",
+      "target": "codex-tools",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-guardian",
+      "target": "codex-core",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-guardian",
+      "target": "codex-extension-api",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-guardian",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-memories-extension",
+      "target": "codex-core",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-memories-extension",
+      "target": "codex-extension-api",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-memories-extension",
+      "target": "codex-features",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-memories-extension",
+      "target": "codex-otel",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-memories-extension",
+      "target": "codex-tools",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-memories-extension",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-memories-extension",
+      "target": "codex-utils-output-truncation",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-memories-extension",
+      "target": "codex-utils-template",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-external-agent-migration",
+      "target": "codex-hooks",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-external-agent-sessions",
+      "target": "codex-app-server-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-external-agent-sessions",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-external-agent-sessions",
+      "target": "codex-utils-output-truncation",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-linux-sandbox",
+      "target": "codex-core",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-linux-sandbox",
+      "target": "codex-install-context",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-linux-sandbox",
+      "target": "codex-process-hardening",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-linux-sandbox",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-linux-sandbox",
+      "target": "codex-sandboxing",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-linux-sandbox",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-login",
+      "target": "codex-agent-identity",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-login",
+      "target": "codex-app-server-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-login",
+      "target": "codex-client",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-login",
+      "target": "codex-config",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-login",
+      "target": "codex-keyring-store",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-login",
+      "target": "codex-model-provider-info",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-login",
+      "target": "codex-otel",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-login",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-login",
+      "target": "codex-terminal-detection",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-login",
+      "target": "codex-utils-template",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-mcp",
+      "target": "codex-api",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-mcp",
+      "target": "codex-async-utils",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-mcp",
+      "target": "codex-config",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-mcp",
+      "target": "codex-exec-server",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-mcp",
+      "target": "codex-login",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-mcp",
+      "target": "codex-model-provider",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-mcp",
+      "target": "codex-otel",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-mcp",
+      "target": "codex-plugin",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-mcp",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-mcp",
+      "target": "codex-rmcp-client",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-mcp",
+      "target": "codex-utils-plugins",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-mcp-server",
+      "target": "codex-arg0",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-mcp-server",
+      "target": "codex-config",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-mcp-server",
+      "target": "codex-core",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-mcp-server",
+      "target": "codex-exec-server",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-mcp-server",
+      "target": "codex-extension-api",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-mcp-server",
+      "target": "codex-login",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-mcp-server",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-mcp-server",
+      "target": "codex-shell-command",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-mcp-server",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-mcp-server",
+      "target": "codex-utils-cli",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-mcp-server",
+      "target": "codex-utils-json-to-toml",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-memories-read",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-memories-read",
+      "target": "codex-shell-command",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-memories-read",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-memories-write",
+      "target": "codex-backend-client",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-memories-write",
+      "target": "codex-config",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-memories-write",
+      "target": "codex-core",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-memories-write",
+      "target": "codex-features",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-memories-write",
+      "target": "codex-git-utils",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-memories-write",
+      "target": "codex-login",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-memories-write",
+      "target": "codex-models-manager",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-memories-write",
+      "target": "codex-otel",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-memories-write",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-memories-write",
+      "target": "codex-rollout",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-memories-write",
+      "target": "codex-rollout-trace",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-memories-write",
+      "target": "codex-secrets",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-memories-write",
+      "target": "codex-state",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-memories-write",
+      "target": "codex-terminal-detection",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-memories-write",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-memories-write",
+      "target": "codex-utils-output-truncation",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-memories-write",
+      "target": "codex-utils-template",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-model-provider-info",
+      "target": "codex-api",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-model-provider-info",
+      "target": "codex-app-server-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-model-provider-info",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-model-provider-info",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-models-manager",
+      "target": "codex-app-server-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-models-manager",
+      "target": "codex-collaboration-mode-templates",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-models-manager",
+      "target": "codex-login",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-models-manager",
+      "target": "codex-otel",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-models-manager",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-models-manager",
+      "target": "codex-utils-output-truncation",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-models-manager",
+      "target": "codex-utils-template",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-network-proxy",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-network-proxy",
+      "target": "codex-utils-home-dir",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-network-proxy",
+      "target": "codex-utils-rustls-provider",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-ollama",
+      "target": "codex-core",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-ollama",
+      "target": "codex-model-provider-info",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-protocol",
+      "target": "codex-async-utils",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-protocol",
+      "target": "codex-execpolicy",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-protocol",
+      "target": "codex-network-proxy",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-protocol",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-protocol",
+      "target": "codex-utils-image",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-protocol",
+      "target": "codex-utils-string",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-rollout",
+      "target": "codex-file-search",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-rollout",
+      "target": "codex-git-utils",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-rollout",
+      "target": "codex-login",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-rollout",
+      "target": "codex-otel",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-rollout",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-rollout",
+      "target": "codex-state",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-rollout",
+      "target": "codex-utils-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-rollout",
+      "target": "codex-utils-string",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-rollout-trace",
+      "target": "codex-code-mode",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-rollout-trace",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-rmcp-client",
+      "target": "codex-api",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-rmcp-client",
+      "target": "codex-client",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-rmcp-client",
+      "target": "codex-config",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-rmcp-client",
+      "target": "codex-exec-server",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-rmcp-client",
+      "target": "codex-keyring-store",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-rmcp-client",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-rmcp-client",
+      "target": "codex-utils-cargo-bin",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-rmcp-client",
+      "target": "codex-utils-home-dir",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-rmcp-client",
+      "target": "codex-utils-pty",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-responses-api-proxy",
+      "target": "codex-process-hardening",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-response-debug-context",
+      "target": "codex-api",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-sandboxing",
+      "target": "codex-network-proxy",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-sandboxing",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-sandboxing",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-stdio-to-uds",
+      "target": "codex-uds",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-stdio-to-uds",
+      "target": "codex-utils-cargo-bin",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-otel",
+      "target": "codex-api",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-otel",
+      "target": "codex-app-server-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-otel",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-otel",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-otel",
+      "target": "codex-utils-string",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-ansi-escape",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-app-server-client",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-app-server-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-arg0",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-cli",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-cloud-requirements",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-config",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-connectors",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-core-plugins",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-core-skills",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-exec-server",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-features",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-feedback",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-file-search",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-git-utils",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-install-context",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-login",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-mcp",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-model-provider",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-model-provider-info",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-models-manager",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-otel",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-plugin",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-realtime-webrtc",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-rollout",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-sandboxing",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-shell-command",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-state",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-terminal-detection",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-utils-approval-presets",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-utils-cargo-bin",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-utils-cli",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-utils-elapsed",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-utils-fuzzy-match",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-utils-home-dir",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-utils-oss",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-utils-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-utils-plugins",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-utils-sandbox-summary",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-utils-sleep-inhibitor",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tui",
+      "target": "codex-utils-string",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tools",
+      "target": "codex-app-server-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tools",
+      "target": "codex-code-mode",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tools",
+      "target": "codex-features",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tools",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tools",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tools",
+      "target": "codex-utils-cargo-bin",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tools",
+      "target": "codex-utils-output-truncation",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tools",
+      "target": "codex-utils-pty",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-tools",
+      "target": "codex-utils-string",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-git-utils",
+      "target": "codex-file-system",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-git-utils",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-git-utils",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-utils-image",
+      "target": "codex-utils-cache",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-utils-home-dir",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-utils-cli",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-utils-cli",
+      "target": "codex-shell-command",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-utils-sandbox-summary",
+      "target": "codex-core",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-utils-sandbox-summary",
+      "target": "codex-model-provider-info",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-utils-sandbox-summary",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-utils-sandbox-summary",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-utils-approval-presets",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-utils-oss",
+      "target": "codex-core",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-utils-oss",
+      "target": "codex-lmstudio",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-utils-oss",
+      "target": "codex-model-provider-info",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-utils-oss",
+      "target": "codex-ollama",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-utils-output-truncation",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-utils-output-truncation",
+      "target": "codex-utils-string",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-utils-path",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-utils-plugins",
+      "target": "codex-exec-server",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-utils-plugins",
+      "target": "codex-login",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-utils-plugins",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-client",
+      "target": "codex-utils-cargo-bin",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-client",
+      "target": "codex-utils-rustls-provider",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-api",
+      "target": "codex-client",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-api",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-api",
+      "target": "codex-utils-rustls-provider",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-state",
+      "target": "codex-git-utils",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-state",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-test-binary-support",
+      "target": "codex-arg0",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-thread-manager-sample",
+      "target": "codex-core-api",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-thread-store",
+      "target": "codex-git-utils",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-thread-store",
+      "target": "codex-install-context",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-thread-store",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-thread-store",
+      "target": "codex-rollout",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-thread-store",
+      "target": "codex-state",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-thread-store",
+      "target": "codex-utils-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-plugin",
+      "target": "codex-config",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-plugin",
+      "target": "codex-utils-absolute-path",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-plugin",
+      "target": "codex-utils-plugins",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-model-provider",
+      "target": "codex-agent-identity",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-model-provider",
+      "target": "codex-api",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-model-provider",
+      "target": "codex-aws-auth",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-model-provider",
+      "target": "codex-client",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-model-provider",
+      "target": "codex-feedback",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-model-provider",
+      "target": "codex-login",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-model-provider",
+      "target": "codex-model-provider-info",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-model-provider",
+      "target": "codex-models-manager",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-model-provider",
+      "target": "codex-otel",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-model-provider",
+      "target": "codex-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "codex-model-provider",
+      "target": "codex-response-debug-context",
+      "type": "depends_on"
+    },
+    {
+      "source": "npm:sdk-typescript",
+      "target": "codex-app-server-protocol",
+      "type": "depends_on"
+    },
+    {
+      "source": "py:sdk-python",
+      "target": "codex-app-server-protocol",
+      "type": "depends_on"
+    }
+  ],
+  "patterns": [
+    {
+      "name": "arg0 multicall dispatch",
+      "where": "codex-rs/arg0",
+      "summary": "Several binaries (codex, codex-exec, codex-tui, codex-mcp-server, codex-app-server) all wrap their main in arg0_dispatch_or_else(...). The same executable behaves differently when symlinked/invoked as codex-linux-sandbox, enabling sandbox helper shipping inside the main binary.",
+      "agent_guidance": "When adding a new binary, copy the arg0_dispatch pattern from codex-rs/exec/src/main.rs. Do NOT call sandbox code directly from main; let arg0 route it."
+    },
+    {
+      "name": "Workspace path dependencies",
+      "where": "codex-rs/Cargo.toml [workspace.dependencies]",
+      "summary": "Every internal crate is declared once in the workspace [workspace.dependencies] block as codex-foo = { path = 'foo' }. Member crates then opt in with codex-foo = { workspace = true }. This means version bumps and feature flags live in one place.",
+      "agent_guidance": "When adding a new crate: (1) add the directory to [workspace] members, (2) add a codex-foo = { path = 'foo' } line under [workspace.dependencies], (3) workspace = true references in consumer crates' Cargo.toml. Run just bazel-lock-update after dep changes."
+    },
+    {
+      "name": "Resist adding to codex-core",
+      "where": "AGENTS.md / codex-rs/core",
+      "summary": "codex-core is the largest crate (~150k LoC, 338 files). AGENTS.md explicitly says: resist adding code to codex-core. Prefer introducing a new sibling crate.",
+      "agent_guidance": "Before touching codex-core, ask whether the new functionality belongs in (a) an existing sibling crate, or (b) a brand-new crate. Refactor as needed."
+    },
+    {
+      "name": "Snapshot tests via insta",
+      "where": "codex-rs/tui",
+      "summary": "All TUI-visible changes ship with insta snapshot updates. PRs without snapshot coverage for UI changes will be rejected.",
+      "agent_guidance": "After UI changes: just test -p codex-tui, then cargo insta pending-snapshots -p codex-tui, review .snap.new files, finally cargo insta accept -p codex-tui."
+    },
+    {
+      "name": "Sandbox env-var sentinels",
+      "where": "codex-rs/*/src/**",
+      "summary": "Existing code uses CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR and CODEX_SANDBOX_ENV_VAR to short-circuit tests that cannot run inside seatbelt/landlock. AGENTS.md says: never add or modify code related to these env vars.",
+      "agent_guidance": "If a test fails inside the sandbox, check whether it should early-exit via these env vars; but do not introduce new variants or modify the checking logic."
+    },
+    {
+      "name": "Tests live next to source",
+      "where": "codex-rs/*/src/*_tests.rs",
+      "summary": "Many crates put unit tests in sibling *_tests.rs files included via #[cfg(test)] #[path = 'foo_tests.rs'] mod tests; rather than #[cfg(test)] mod tests { ... }. Integration tests live in tests/.",
+      "agent_guidance": "Match the local convention: if neighbors use sibling _tests.rs files, do the same."
+    },
+    {
+      "name": "Extension architecture",
+      "where": "codex-rs/ext/extension-api, codex-rs/ext/{goal,guardian,memories}",
+      "summary": "First-party features like Goal, Guardian, Memories are factored as extension crates that depend on codex-extension-api. Memories additionally splits into memories/read and memories/write for fine-grained access control.",
+      "agent_guidance": "When adding a major behavioral feature, consider it as an ext/ extension before bolting it into codex-core."
+    },
+    {
+      "name": "Multi-target build: Cargo + Bazel + pnpm",
+      "where": "MODULE.bazel, codex-rs/Cargo.toml, pnpm-workspace.yaml",
+      "summary": "The repo builds with Cargo for dev (fast), Bazel for CI/cross-platform reproducibility, and pnpm for the JS workspaces (codex-cli, sdk/typescript, codex-rs/responses-api-proxy/npm).",
+      "agent_guidance": "If you add include_str!/include_bytes!/sqlx::migrate! in a Rust crate, update its BUILD.bazel compile_data or Bazel will fail even though Cargo passes."
+    }
+  ],
+  "agent_guidance": {
+    "navigation": [
+      "Read AGENTS.md first; it has dozens of binding conventions (formatting, lints, test discipline, do-not-touch zones).",
+      "Most Rust code lives under codex-rs/. The workspace has 112 crates; crate names are prefixed codex-.",
+      "User-visible behavior changes start in codex-tui (TUI) or codex-exec (headless). Both delegate to codex-core for the agent loop.",
+      "Wire types are in codex-protocol and codex-app-server-protocol. Almost everything else depends on one of these; touching them is high-blast-radius."
+    ],
+    "build_and_test": [
+      "Format: just fmt (from codex-rs/); run automatically after editing Rust.",
+      "Test a single crate: just test -p codex-<name> (e.g. just test -p codex-tui). Never cargo test directly.",
+      "Full suite: just test; ask before running, slow.",
+      "Lint: just fix -p codex-<name> before finalizing a large change.",
+      "Snapshot tests: cargo insta pending-snapshots -p codex-<name>, review .snap.new, cargo insta accept -p codex-<name>.",
+      "Bazel lockfile after Cargo dep changes: just bazel-lock-update, then just bazel-lock-check to verify.",
+      "If you change ConfigToml: just write-config-schema (regenerates codex-rs/core/config.schema.json).",
+      "If you change hook schemas: npm run write-hooks-schema (from repo root)."
+    ],
+    "things_not_to_touch": [
+      "Never add or modify code that references CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR or CODEX_SANDBOX_ENV_VAR.",
+      "Avoid adding new code to codex-core unless there is no better crate for it. Prefer extracting to a sibling.",
+      "Do not add user-facing product docs to docs/; that folder is repo-internal. App-server API docs are the exception.",
+      "Do not call reset_client_session unnecessarily.",
+      "Do not use #[async_trait] or #[allow(async_fn_in_trait)] in new traits; use RPITIT with explicit Send bounds."
+    ],
+    "rust_style": [
+      "Always inline format args: format!(\"{x}\") not format!(\"{}\", x).",
+      "Collapse if per clippy.",
+      "Use method references over closures where possible.",
+      "Make match exhaustive; avoid wildcard arms.",
+      "Avoid bool/Option<bool> parameters at API boundaries; prefer enums or newtypes.",
+      "When you must pass opaque literals positionally, annotate with /*param_name*/ comments (argument-comment lint).",
+      "Tests: use pretty_assertions::assert_eq and compare whole objects, not field-by-field.",
+      "Target Rust modules < 500 LoC. Add new modules instead of growing chatwidget.rs, app.rs, chat_composer.rs, footer.rs, bottom_pane/mod.rs."
+    ],
+    "how_to_add_a_new_crate": [
+      "1. Create the directory under codex-rs/<name>/ with Cargo.toml (use version.workspace = true etc.).",
+      "2. Add \"<name>\" to [workspace] members in codex-rs/Cargo.toml.",
+      "3. Add codex-<name> = { path = \"<name>\" } under [workspace.dependencies].",
+      "4. Consumers reference it as codex-<name> = { workspace = true }.",
+      "5. If the crate uses include_str!/include_bytes!/sqlx::migrate!, update its BUILD.bazel (compile_data or build_script_data).",
+      "6. Run just bazel-lock-update and commit MODULE.bazel.lock.",
+      "7. If your crate is an extension, depend on codex-extension-api; consider read/write sub-crates if it touches sensitive state."
+    ],
+    "tui_specific": [
+      "Use ratatui Stylize helpers (\"text\".dim(), \"text\".cyan()) over manual Style/Span::styled.",
+      "Never .white(); let the default fg show.",
+      "Use textwrap::wrap for plain strings; tui/src/wrapping.rs helpers for Lines; prefix_lines in line_utils for prefixing.",
+      "Don't add standalone methods to chatwidget.rs unless trivial; keep it orchestration-only."
+    ]
+  },
+  "stats": {
+    "rust_crates": 112,
+    "total_rust_loc": 736790,
+    "total_rust_files": 1642,
+    "internal_edges": 547,
+    "top_5_by_loc": [
+      {
+        "name": "codex-tui",
+        "lines": 193863,
+        "files": 320
+      },
+      {
+        "name": "codex-core",
+        "lines": 151415,
+        "files": 338
+      },
+      {
+        "name": "codex-app-server",
+        "lines": 39229,
+        "files": 67
+      },
+      {
+        "name": "codex-app-server-protocol",
+        "lines": 23967,
+        "files": 44
+      },
+      {
+        "name": "codex-core-plugins",
+        "lines": 21197,
+        "files": 34
+      }
+    ]
+  }
+}
